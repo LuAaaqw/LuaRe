@@ -11356,6 +11356,32 @@ function Library:CreateWindow(WindowInfo)
         Tabs.Active = Library.Toggled
     end
 
+    local function UpdateTabPresentation()
+        for _, TabInfo in ipairs(Library.TabButtons) do
+            local Label = TabInfo.Label
+            local IconObject = TabInfo.Icon
+
+            if Label then
+                Label.Visible = not GuiConnected
+                Label.TextXAlignment = Enum.TextXAlignment.Center
+                Label.TextYAlignment = Enum.TextYAlignment.Center
+                Label.AnchorPoint = Vector2.new(0.5, 0.5)
+                Label.Position = UDim2.new(0.5, 0, 0.5, 0)
+                Label.Size = UDim2.new(1, -56, 1, 0)
+            end
+
+            if IconObject then
+                IconObject.Visible = true
+                IconObject.AnchorPoint = Vector2.new(0.5, 0.5)
+                if GuiConnected then
+                    IconObject.Position = UDim2.new(0.5, 0, 0.5, 0)
+                else
+                    IconObject.Position = UDim2.new(0.5, -34, 0.5, 0)
+                end
+            end
+        end
+    end
+
     local function SetGuiConnected(State)
         GuiConnected = State ~= false
         Library.GuiConnected = GuiConnected
@@ -11437,6 +11463,8 @@ function Library:CreateWindow(WindowInfo)
             Library:ApplyLucideIcon(GuiLinkButton, Icon)
             GuiLinkButton.ImageTransparency = 0.05
         end
+
+        UpdateTabPresentation()
     end
 
     local function SetGuiPartPosition(Name, Position)
@@ -11936,7 +11964,22 @@ function Library:CreateWindow(WindowInfo)
                 Label = TabLabel,
                 Padding = ButtonPadding,
                 Icon = TabIcon,
+                Button = TabButton,
             })
+
+            if TabLabel then
+                TabLabel.Visible = not GuiConnected
+                TabLabel.TextXAlignment = Enum.TextXAlignment.Center
+                TabLabel.TextYAlignment = Enum.TextYAlignment.Center
+                TabLabel.AnchorPoint = Vector2.new(0.5, 0.5)
+                TabLabel.Position = UDim2.new(0.5, 0, 0.5, 0)
+                TabLabel.Size = UDim2.new(1, -56, 1, 0)
+            end
+            if TabIcon then
+                TabIcon.Visible = true
+                TabIcon.AnchorPoint = Vector2.new(0.5, 0.5)
+                TabIcon.Position = GuiConnected and UDim2.new(0.5, 0, 0.5, 0) or UDim2.new(0.5, -34, 0.5, 0)
+            end
 
 
             TabContainer = New("Frame", {
