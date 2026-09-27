@@ -11307,6 +11307,11 @@ function Library:CreateWindow(WindowInfo)
             Tabs.Position = OriginalSidebarPosition
             Tabs.Size = OriginalSidebarSize
             Tabs.ZIndex = 1
+            for _, Descendant in Tabs:GetDescendants() do
+                if Descendant:IsA("GuiObject") then
+                    Descendant.ZIndex = math.min(Descendant.ZIndex, 2)
+                end
+            end
             MainFrame.AnchorPoint = OriginalMainAnchor
             MainFrame.Position = OriginalMainPosition
             MainFrame.Size = OriginalMainSize
@@ -11329,11 +11334,20 @@ function Library:CreateWindow(WindowInfo)
             Tabs.AnchorPoint = Vector2.zero
             Tabs.Position = UDim2.fromOffset(absPos.X, absPos.Y)
             Tabs.Size = UDim2.fromOffset(absSize.X, absSize.Y)
-            Tabs.ZIndex = 20
+            Tabs.ZIndex = 100
             Tabs.Visible = Library.Toggled
+            Tabs.ClipsDescendants = true
+            Tabs.ScrollBarImageTransparency = 0
+
+            for _, Descendant in Tabs:GetDescendants() do
+                if Descendant:IsA("GuiObject") then
+                    Descendant.ZIndex = math.max(101, Descendant.ZIndex)
+                    Descendant.Visible = true
+                end
+            end
 
             SidebarImage.Parent = Tabs
-            SidebarImage.ZIndex = 19
+            SidebarImage.ZIndex = 100
             SidebarImage.Visible = true
             UpdateSidebarImage()
 
