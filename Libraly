@@ -11363,16 +11363,56 @@ function Library:CreateWindow(WindowInfo)
         end
     end))
 
+    if not GuiLockButton then
+        GuiLockButton = New("ImageButton", {
+            BackgroundColor3 = "MainColor",
+            AutoButtonColor = false,
+            Size = UDim2.fromOffset(32, 32),
+            ImageTransparency = 0.15,
+            Parent = RightWrapper,
+        })
+        GuiLockStroke = New("UIStroke", {
+            Color = "OutlineColor",
+            Parent = GuiLockButton,
+        })
+        table.insert(Library.Corners, New("UICorner", {
+            CornerRadius = UDim.new(0, WindowInfo.CornerRadius),
+            Parent = GuiLockButton,
+        }))
+    end
+
+    if not GuiLinkButton then
+        GuiLinkButton = New("ImageButton", {
+            BackgroundColor3 = "MainColor",
+            AutoButtonColor = false,
+            Size = UDim2.fromOffset(32, 32),
+            ImageTransparency = 0.15,
+            Parent = RightWrapper,
+        })
+        GuiLinkStroke = New("UIStroke", {
+            Color = "OutlineColor",
+            Parent = GuiLinkButton,
+        })
+        table.insert(Library.Corners, New("UICorner", {
+            CornerRadius = UDim.new(0, WindowInfo.CornerRadius),
+            Parent = GuiLinkButton,
+        }))
+    end
+
     Library:MakeDraggable(Tabs, SidebarHandle, true, false, WindowSnapConfig)
     Library:MakeDraggable(Container, ContentHandle, true, false, WindowSnapConfig)
 
-    GuiLockButton.MouseButton1Click:Connect(function()
-        SetGuiLocked(not GuiLocked)
-    end)
+    if GuiLockButton and GuiLockButton:IsA("GuiButton") then
+        GuiLockButton.MouseButton1Click:Connect(function()
+            SetGuiLocked(not GuiLocked)
+        end)
+    end
 
-    GuiLinkButton.MouseButton1Click:Connect(function()
-        SetGuiConnected(not GuiConnected)
-    end)
+    if GuiLinkButton and GuiLinkButton:IsA("GuiButton") then
+        GuiLinkButton.MouseButton1Click:Connect(function()
+            SetGuiConnected(not GuiConnected)
+        end)
+    end
 
     SetGuiConnected(true)
     SetGuiLocked(true)
