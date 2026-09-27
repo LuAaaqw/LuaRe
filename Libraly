@@ -11912,7 +11912,7 @@ function Library:CreateWindow(WindowInfo)
                     AnchorPoint = Vector2.new(0, 0.5),
                     Position = UDim2.new(0, 0, 0.5, 0),
                     Size = UDim2.fromOffset(TabIconSize, TabIconSize),
-                    Visible = not IsCompact,
+                    Visible = true,
                     Parent = ButtonHolder,
                 })
                 Library:ApplyLucideIcon(TabIcon, Icon)
@@ -11928,7 +11928,7 @@ function Library:CreateWindow(WindowInfo)
                 TextSize = 16,
                 TextTransparency = 0.5,
                 TextXAlignment = Enum.TextXAlignment.Left,
-                Visible = not IsCompact,
+                Visible = true,
                 Parent = ButtonHolder,
             })
 
@@ -13145,7 +13145,7 @@ function Library:CreateWindow(WindowInfo)
             local Resolved = Library:GetCustomIcon(NewIcon)
             if Resolved then
                 Library:ApplyLucideIcon(TabIcon, Resolved)
-                TabIcon.Visible = not IsCompact
+                TabIcon.Visible = true
             end
         end
 
