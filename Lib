@@ -11426,7 +11426,6 @@ function Library:CreateWindow(WindowInfo)
 
         if GuiConnected then
             AttachPart("Sidebar", Tabs)
-            AttachPart("Content", Container)
             MainFrame.Visible = Library.Toggled
             Tabs.Visible = true
             Container.Visible = true
@@ -11436,14 +11435,16 @@ function Library:CreateWindow(WindowInfo)
             Container.Size = UDim2.new(1, -InitialLeftWidth - 1, 1, -70)
             Tabs.AnchorPoint = Vector2.zero
             Container.AnchorPoint = Vector2.new(1, 0)
+            GuiPartDetached.Content = false
             SaveRelativePartState()
         else
             SaveRelativePartState()
             DetachPart("Sidebar", Tabs)
-            DetachPart("Content", Container)
-            MainFrame.Visible = false
-            Tabs.Visible = Library.Toggled
+            GuiPartDetached.Content = false
+            Container.Parent = MainFrame
             Container.Visible = Library.Toggled
+            MainFrame.Visible = Library.Toggled
+            Tabs.Visible = Library.Toggled
         end
 
         local Icon = Library:GetIcon(GuiConnected and "link" or "unlink")
@@ -11476,6 +11477,9 @@ function Library:CreateWindow(WindowInfo)
         end
 
         local Object = GuiParts[Name]
+        if Name ~= "Sidebar" then
+            return false
+        end
         if not Object or not GuiPartDetached[Name] then
             return false
         end
@@ -11519,10 +11523,19 @@ function Library:CreateWindow(WindowInfo)
         CornerRadius = UDim.new(0, 6),
         Parent = ContentHandle,
     }))
-    local ContentHandleIcon = Library:GetIcon("move")
-    if ContentHandleIcon then
-        Library:ApplyLucideIcon(ContentHandle, ContentHandleIcon)
-    end
+    ContentHandle.Visible = false
+
+    local SidebarDragRegion = New("Frame", {
+        Name = "SidebarDragRegion",
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        Position = UDim2.fromOffset(0, 0),
+        Size = UDim2.new(1, 0, 0, 34),
+        Visible = false,
+        Active = true,
+        ZIndex = 31,
+        Parent = ScreenGui,
+    })
 
     local function UpdateGuiHandles()
         if not GuiPartDetached.Sidebar and not GuiPartDetached.Content then
@@ -11531,14 +11544,13 @@ function Library:CreateWindow(WindowInfo)
             return
         end
 
-        SidebarHandle.Visible = not GuiLocked and GuiPartDetached.Sidebar
-        ContentHandle.Visible = not GuiLocked and GuiPartDetached.Content
+        SidebarHandle.Visible = false
+        ContentHandle.Visible = false
+        SidebarDragRegion.Visible = GuiPartDetached.Sidebar and not GuiConnected
 
-        if SidebarHandle.Visible then
-            SidebarHandle.Position = UDim2.fromOffset(Tabs.AbsolutePosition.X + 6, Tabs.AbsolutePosition.Y + 4)
-        end
-        if ContentHandle.Visible then
-            ContentHandle.Position = UDim2.fromOffset(Container.AbsolutePosition.X + 6, Container.AbsolutePosition.Y + 4)
+        if SidebarDragRegion.Visible then
+            SidebarDragRegion.Position = UDim2.fromOffset(Tabs.AbsolutePosition.X, Tabs.AbsolutePosition.Y)
+            SidebarDragRegion.Size = UDim2.fromOffset(Tabs.AbsoluteSize.X, 34)
         end
     end
 
@@ -11548,7 +11560,7 @@ function Library:CreateWindow(WindowInfo)
         local StartPosition
 
         Handle.InputBegan:Connect(function(Input)
-            if GuiLocked or GuiConnected then
+            if GuiConnected then
                 return
             end
             if Input.UserInputType ~= Enum.UserInputType.MouseButton1 and Input.UserInputType ~= Enum.UserInputType.Touch then
@@ -11567,7 +11579,7 @@ function Library:CreateWindow(WindowInfo)
         end)
 
         Library:GiveSignal(UserInputService.InputChanged:Connect(function(Input)
-            if not Dragging or GuiLocked or GuiConnected then
+            if not Dragging or GuiConnected then
                 return
             end
             if Input.UserInputType ~= Enum.UserInputType.MouseMovement and Input.UserInputType ~= Enum.UserInputType.Touch then
@@ -11582,8 +11594,7 @@ function Library:CreateWindow(WindowInfo)
         end))
     end
 
-    MakeDetachedDraggable("Sidebar", Tabs, SidebarHandle)
-    MakeDetachedDraggable("Content", Container, ContentHandle)
+    MakeDetachedDraggable("Sidebar", Tabs, SidebarDragRegion)
 
     Library:GiveSignal(RunService.RenderStepped:Connect(function()
         if MainFrame and MainFrame.Parent then
@@ -11612,7 +11623,8 @@ function Library:CreateWindow(WindowInfo)
     end
 
     SetGuiConnected(true)
-    SetGuiLocked(true)
+    GuiLocked = false
+    Library.GuiLocked = false
 
 
     local Window = {}
