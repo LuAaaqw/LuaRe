@@ -11358,6 +11358,9 @@ function Library:CreateWindow(WindowInfo)
 
         if GuiConnected then
             SidebarHost.Visible = false
+            if DividerLine then
+                DividerLine.Visible = true
+            end
             TitleHolder.Parent = TopBar
             TitleHolder.Position = UDim2.fromOffset(0, 0)
             TitleHolder.Size = UDim2.new(0, InitialLeftWidth, 1, 0)
@@ -11388,6 +11391,9 @@ function Library:CreateWindow(WindowInfo)
             Container.Parent = MainFrame
             Container.Visible = Library.Toggled
         else
+            if DividerLine then
+                DividerLine.Visible = false
+            end
             local absPos = SidebarHost.AbsolutePosition
             if absPos.X == 0 and absPos.Y == 0 then
                 absPos = Tabs.AbsolutePosition
