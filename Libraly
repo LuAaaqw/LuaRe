@@ -11478,47 +11478,6 @@ function Library:CreateWindow(WindowInfo)
         return true
     end
 
-    Window.SetGuiLocked = SetGuiLocked
-    Window.SetGuiConnected = SetGuiConnected
-    Window.ConnectGui = function()
-        SetGuiConnected(true)
-    end
-    Window.DisconnectGui = function()
-        SetGuiConnected(false)
-    end
-    Window.IsGuiLocked = function()
-        return GuiLocked
-    end
-    Window.IsGuiConnected = function()
-        return GuiConnected
-    end
-    Window.SetGuiPartPosition = SetGuiPartPosition
-    Window.GetGuiPart = function(_, Name)
-        return GuiParts[Name]
-    end
-    Window.SetGuiPartCorner = function(_, Name, Radius)
-        return SetPartCorner(Name, Radius)
-    end
-    Window.GetGuiPartCorner = function(_, Name)
-        local Corner = GuiPartCorners[Name]
-        return Corner and Corner.CornerRadius.Offset or nil
-    end
-    Window.SetGuiPartImage = function(_, Name, Image)
-        return SetPartImage(Name, Image)
-    end
-    Window.ClearGuiPartImage = function(_, Name)
-        return SetPartImage(Name, nil)
-    end
-    Window.GetGuiPartImage = function(_, Name)
-        local ImageObject = GuiPartImages[Name]
-        return ImageObject and ImageObject.Image or nil
-    end
-    Window.ResetGuiLayout = function()
-        SetGuiConnected(true)
-        SetPartCorner("Sidebar", WindowInfo.CornerRadius)
-        SetPartCorner("Content", WindowInfo.CornerRadius)
-    end
-
     local SidebarHandle = New("ImageButton", {
         Name = "SidebarMoveHandle",
         BackgroundColor3 = "MainColor",
