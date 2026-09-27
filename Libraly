@@ -11083,7 +11083,55 @@ function Library:CreateWindow(WindowInfo)
             Library:ApplyLucideIcon(SearchIconImage, SearchIcon)
         end
 
+        local GuiLockButton = New("ImageButton", {
+            BackgroundColor3 = "MainColor",
+            AutoButtonColor = false,
+            Size = UDim2.fromOffset(32, 32),
+            ImageTransparency = 0.15,
+            Parent = RightWrapper,
+        })
+        table.insert(
+            Library.Corners,
+            New("UICorner", {
+                CornerRadius = UDim.new(0, WindowInfo.CornerRadius),
+                Parent = GuiLockButton,
+            })
+        )
+        local GuiLockStroke = New("UIStroke", {
+            Color = "OutlineColor",
+            Parent = GuiLockButton,
+        })
+
+        local GuiLinkButton = New("ImageButton", {
+            BackgroundColor3 = "MainColor",
+            AutoButtonColor = false,
+            Size = UDim2.fromOffset(32, 32),
+            ImageTransparency = 0.15,
+            Parent = RightWrapper,
+        })
+        table.insert(
+            Library.Corners,
+            New("UICorner", {
+                CornerRadius = UDim.new(0, WindowInfo.CornerRadius),
+                Parent = GuiLinkButton,
+            })
+        )
+        local GuiLinkStroke = New("UIStroke", {
+            Color = "OutlineColor",
+            Parent = GuiLinkButton,
+        })
+
         if MoveIcon then
+            local MoveIconImage = New("ImageLabel", {
+                AnchorPoint = Vector2.new(1, 0.5),
+                ImageColor3 = "OutlineColor",
+                Position = UDim2.new(1, -10, 0.5, 0),
+                Size = UDim2.fromOffset(28, 28),
+                SizeConstraint = Enum.SizeConstraint.RelativeYY,
+                Parent = TopBar,
+            })
+            Library:ApplyLucideIcon(MoveIconImage, MoveIcon)
+        end
             local MoveIconImage = New("ImageLabel", {
                 AnchorPoint = Vector2.new(1, 0.5),
                 ImageColor3 = "OutlineColor",
@@ -11215,63 +11263,125 @@ function Library:CreateWindow(WindowInfo)
     end
 
     local GuiParts = { Window = MainFrame, Header = TopBar, Sidebar = Tabs, Content = Container }
-    local GuiLocked = false
+    local GuiLocked = true
     local GuiConnected = true
-    local GuiDragConnections = {}
+    local GuiHandles = {}
 
-    local function DisconnectGuiPart(Name)
-        local Connection = GuiDragConnections[Name]
-        if Connection then Connection:Disconnect() GuiDragConnections[Name] = nil end
+    local SidebarHandle = New("ImageButton", {
+        Name = "SidebarMoveHandle",
+        AnchorPoint = Vector2.new(0, 0),
+        BackgroundColor3 = "MainColor",
+        BackgroundTransparency = 0.05,
+        AutoButtonColor = false,
+        Position = UDim2.fromOffset(6, 53),
+        Size = UDim2.fromOffset(28, 28),
+        ImageTransparency = 0.1,
+        Visible = false,
+        ZIndex = 20,
+        Parent = MainFrame,
+    })
+    table.insert(Library.Corners, New("UICorner", {
+        CornerRadius = UDim.new(0, 6),
+        Parent = SidebarHandle,
+    }))
+    local SidebarHandleIcon = Library:GetIcon("move")
+    if SidebarHandleIcon then
+        Library:ApplyLucideIcon(SidebarHandle, SidebarHandleIcon)
     end
 
-    local function MakeGuiPartDraggable(Name, Object)
-        DisconnectGuiPart(Name)
-        local Dragging = false
-        local StartInput
-        local StartPosition
-        GuiDragConnections[Name] = Object.InputBegan:Connect(function(Input)
-            if GuiLocked or GuiConnected then return end
-            if Input.UserInputType ~= Enum.UserInputType.MouseButton1 and Input.UserInputType ~= Enum.UserInputType.Touch then return end
-            Dragging = true
-            StartInput = Input
-            StartPosition = Object.Position
-        end)
-        Library:GiveSignal(UserInputService.InputEnded:Connect(function(Input)
-            if Input == StartInput then Dragging = false end
-        end))
-        Library:GiveSignal(UserInputService.InputChanged:Connect(function(Input)
-            if not Dragging or GuiLocked or GuiConnected then return end
-            if Input.UserInputType ~= Enum.UserInputType.MouseMovement and Input.UserInputType ~= Enum.UserInputType.Touch then return end
-            local Delta = Input.Position - StartInput.Position
-            Object.Position = UDim2.new(StartPosition.X.Scale, StartPosition.X.Offset + Delta.X, StartPosition.Y.Scale, StartPosition.Y.Offset + Delta.Y)
-        end))
+    local ContentHandle = New("ImageButton", {
+        Name = "ContentMoveHandle",
+        AnchorPoint = Vector2.new(1, 0),
+        BackgroundColor3 = "MainColor",
+        BackgroundTransparency = 0.05,
+        AutoButtonColor = false,
+        Position = UDim2.new(1, -6, 0, 53),
+        Size = UDim2.fromOffset(28, 28),
+        ImageTransparency = 0.1,
+        Visible = false,
+        ZIndex = 20,
+        Parent = MainFrame,
+    })
+    table.insert(Library.Corners, New("UICorner", {
+        CornerRadius = UDim.new(0, 6),
+        Parent = ContentHandle,
+    }))
+    local ContentHandleIcon = Library:GetIcon("move")
+    if ContentHandleIcon then
+        Library:ApplyLucideIcon(ContentHandle, ContentHandleIcon)
+    end
+
+    GuiHandles.Sidebar = SidebarHandle
+    GuiHandles.Content = ContentHandle
+
+    local function UpdateGuiHandles()
+        local SidebarPos = Tabs.Position
+        local ContentPos = Container.Position
+        SidebarHandle.Position = UDim2.fromOffset(SidebarPos.X.Offset + 6, SidebarPos.Y.Offset + 4)
+        ContentHandle.Position = UDim2.new(ContentPos.X.Scale, ContentPos.X.Offset - 6, ContentPos.Y.Scale, ContentPos.Y.Offset + 4)
+        SidebarHandle.Size = UDim2.fromOffset(28, 28)
+        ContentHandle.Size = UDim2.fromOffset(28, 28)
+    end
+
+    local function SetHandleState(Visible)
+        SidebarHandle.Visible = Visible
+        ContentHandle.Visible = Visible
+        UpdateGuiHandles()
     end
 
     local function SetGuiLocked(State)
         GuiLocked = State == true
         Library.GuiLocked = GuiLocked
-        Library.GuiConnected = GuiConnected
-        TopBar.Active = not GuiLocked
-        Tabs.Active = not GuiLocked and not GuiConnected
-        Container.Active = not GuiLocked and not GuiConnected
+        GuiLockButton.ImageTransparency = GuiLocked and 0 or 0.15
+        local Icon = Library:GetIcon(GuiLocked and "lock" or "lock-open")
+        if Icon then
+            Library:ApplyLucideIcon(GuiLockButton, Icon)
+        end
+        GuiLockStroke.Color = GuiLocked and Library.Scheme.AccentColor or Library.Scheme.OutlineColor
+        SetHandleState(not GuiLocked and not GuiConnected)
     end
 
     local function SetGuiConnected(State)
         GuiConnected = State == true
         Library.GuiConnected = GuiConnected
+        local Icon = Library:GetIcon(GuiConnected and "link" or "unlink")
+        if Icon then
+            Library:ApplyLucideIcon(GuiLinkButton, Icon)
+        end
+        GuiLinkButton.ImageTransparency = GuiConnected and 0 or 0.15
+        GuiLinkStroke.Color = GuiConnected and Library.Scheme.AccentColor or Library.Scheme.OutlineColor
+
         if GuiConnected then
-            DisconnectGuiPart("Sidebar")
-            DisconnectGuiPart("Content")
             Tabs.Position = UDim2.fromOffset(0, 49)
             Container.Position = UDim2.new(1, 0, 0, 49)
             Tabs.Size = UDim2.new(0, InitialLeftWidth, 1, -70)
             Container.Size = UDim2.new(1, -InitialLeftWidth - 1, 1, -70)
+            SetHandleState(false)
         else
-            MakeGuiPartDraggable("Sidebar", Tabs)
-            MakeGuiPartDraggable("Content", Container)
+            SetHandleState(not GuiLocked)
         end
-        SetGuiLocked(GuiLocked)
+        UpdateGuiHandles()
     end
+
+    Library:GiveSignal(RunService.RenderStepped:Connect(function()
+        if MainFrame and MainFrame.Parent then
+            UpdateGuiHandles()
+        end
+    end))
+
+    Library:MakeDraggable(Tabs, SidebarHandle, true, false, WindowSnapConfig)
+    Library:MakeDraggable(Container, ContentHandle, true, false, WindowSnapConfig)
+
+    GuiLockButton.MouseButton1Click:Connect(function()
+        SetGuiLocked(not GuiLocked)
+    end)
+
+    GuiLinkButton.MouseButton1Click:Connect(function()
+        SetGuiConnected(not GuiConnected)
+    end)
+
+    SetGuiConnected(true)
+    SetGuiLocked(true)
 
 
     local Window = {}
@@ -11308,11 +11418,22 @@ function Library:CreateWindow(WindowInfo)
     function Window:SetGuiPartPosition(Part, Position)
         assert(typeof(Position) == "UDim2", "Expected UDim2 for Position got: " .. typeof(Position))
         local Object = GuiParts[Part]
-        if Object and not GuiLocked then Object.Position = Position end
+        if Object and not GuiLocked and not GuiConnected then
+            Object.Position = Position
+            UpdateGuiHandles()
+        end
     end
 
     function Window:GetGuiPart(Part)
         return GuiParts[Part]
+    end
+
+    function Window:ConnectGui()
+        SetGuiConnected(true)
+    end
+
+    function Window:DisconnectGui()
+        SetGuiConnected(false)
     end
 
     function Window:SetIcon(Icon)
