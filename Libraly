@@ -10854,6 +10854,7 @@ function Library:CreateWindow(WindowInfo)
             Parent = MainFrame,
             ZIndex = 2
         })
+        DividerLine.Visible = true
 
         local BackgroundIcon = Library:GetCustomIcon(WindowInfo.BackgroundImage)
         HasBackgroundImage = BackgroundIcon ~= nil
@@ -11357,10 +11358,11 @@ function Library:CreateWindow(WindowInfo)
         Library.GuiConnected = GuiConnected
 
         if GuiConnected then
-            SidebarHost.Visible = false
+            -- The divider belongs only to the connected layout.
             if DividerLine then
                 DividerLine.Visible = true
             end
+            SidebarHost.Visible = false
             TitleHolder.Parent = TopBar
             TitleHolder.Position = UDim2.fromOffset(0, 0)
             TitleHolder.Size = UDim2.new(0, InitialLeftWidth, 1, 0)
@@ -11383,6 +11385,10 @@ function Library:CreateWindow(WindowInfo)
             MainFrame.AnchorPoint = OriginalMainAnchor
             MainFrame.Position = OriginalMainPosition
             MainFrame.Size = OriginalMainSize
+            if DividerLine then
+                DividerLine.Position = UDim2.fromOffset(InitialLeftWidth, 0)
+                DividerLine.Visible = true
+            end
             RightWrapper.Size = UDim2.new(1, -InitialLeftWidth - 57 - 1, 1, -16)
             RightWrapper.Position = UDim2.new(1, -49, 0.5, 0)
             Container.Position = OriginalContainerPosition
@@ -11391,6 +11397,8 @@ function Library:CreateWindow(WindowInfo)
             Container.Parent = MainFrame
             Container.Visible = Library.Toggled
         else
+            -- When the tab/sidebar is detached, the old divider must disappear
+            -- instead of remaining fixed inside MainFrame.
             if DividerLine then
                 DividerLine.Visible = false
             end
@@ -11475,6 +11483,15 @@ function Library:CreateWindow(WindowInfo)
 
     function Window:IsGuiConnected()
         return GuiConnected
+    end
+
+    function Window:SyncGuiDivider()
+        if DividerLine then
+            DividerLine.Visible = GuiConnected
+            if GuiConnected then
+                DividerLine.Position = UDim2.fromOffset(InitialLeftWidth, 0)
+            end
+        end
     end
 
     function Window:SetGuiPartPosition(Part, Position)
