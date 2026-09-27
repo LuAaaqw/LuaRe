@@ -10722,7 +10722,7 @@ function Library:CreateWindow(WindowInfo)
     WindowInfo = Library:Validate(WindowInfo, Templates.Window)
     WindowInfo.Title = WindowInfo.Title or "LuaRe"
     WindowInfo.Footer = WindowInfo.Footer or "LuaRe Library"
-    WindowInfo.Icon = 121640081002120
+    WindowInfo.Icon = WindowInfo.Icon or 121640081002120
     local ViewportSize: Vector2 = workspace.CurrentCamera.ViewportSize
     if RunService:IsStudio() and ViewportSize.X <= 5 and ViewportSize.Y <= 5 then
         repeat
@@ -11214,9 +11214,71 @@ function Library:CreateWindow(WindowInfo)
         Library.WindowContainer = Container
     end
 
+    local GuiParts = { Window = MainFrame, Header = TopBar, Sidebar = Tabs, Content = Container }
+    local GuiLocked = false
+    local GuiConnected = true
+    local GuiDragConnections = {}
+
+    local function DisconnectGuiPart(Name)
+        local Connection = GuiDragConnections[Name]
+        if Connection then Connection:Disconnect() GuiDragConnections[Name] = nil end
+    end
+
+    local function MakeGuiPartDraggable(Name, Object)
+        DisconnectGuiPart(Name)
+        local Dragging = false
+        local StartInput
+        local StartPosition
+        GuiDragConnections[Name] = Object.InputBegan:Connect(function(Input)
+            if GuiLocked or GuiConnected then return end
+            if Input.UserInputType ~= Enum.UserInputType.MouseButton1 and Input.UserInputType ~= Enum.UserInputType.Touch then return end
+            Dragging = true
+            StartInput = Input
+            StartPosition = Object.Position
+        end)
+        Library:GiveSignal(UserInputService.InputEnded:Connect(function(Input)
+            if Input == StartInput then Dragging = false end
+        end))
+        Library:GiveSignal(UserInputService.InputChanged:Connect(function(Input)
+            if not Dragging or GuiLocked or GuiConnected then return end
+            if Input.UserInputType ~= Enum.UserInputType.MouseMovement and Input.UserInputType ~= Enum.UserInputType.Touch then return end
+            local Delta = Input.Position - StartInput.Position
+            Object.Position = UDim2.new(StartPosition.X.Scale, StartPosition.X.Offset + Delta.X, StartPosition.Y.Scale, StartPosition.Y.Offset + Delta.Y)
+        end))
+    end
+
+    local function SetGuiLocked(State)
+        GuiLocked = State == true
+        Library.GuiLocked = GuiLocked
+        Library.GuiConnected = GuiConnected
+        TopBar.Active = not GuiLocked
+        Tabs.Active = not GuiLocked and not GuiConnected
+        Container.Active = not GuiLocked and not GuiConnected
+    end
+
+    local function SetGuiConnected(State)
+        GuiConnected = State == true
+        Library.GuiConnected = GuiConnected
+        if GuiConnected then
+            DisconnectGuiPart("Sidebar")
+            DisconnectGuiPart("Content")
+            Tabs.Position = UDim2.fromOffset(0, 49)
+            Container.Position = UDim2.new(1, 0, 0, 49)
+            Tabs.Size = UDim2.new(0, InitialLeftWidth, 1, -70)
+            Container.Size = UDim2.new(1, -InitialLeftWidth - 1, 1, -70)
+        else
+            MakeGuiPartDraggable("Sidebar", Tabs)
+            MakeGuiPartDraggable("Content", Container)
+        end
+        SetGuiLocked(GuiLocked)
+    end
+
 
     local Window = {}
     local Fading = false
+    Library.GuiParts = GuiParts
+    Library.GuiLocked = GuiLocked
+    Library.GuiConnected = GuiConnected
 
     local function SetUICorner(UICorner, Corner, HalfValue)
         local Current = UICorner[Corner]
@@ -11225,6 +11287,49 @@ function Library:CreateWindow(WindowInfo)
         end
 
         UICorner[Corner] = HalfValue
+    end
+
+    function Window:SetGuiLocked(State)
+        SetGuiLocked(State)
+    end
+
+    function Window:IsGuiLocked()
+        return GuiLocked
+    end
+
+    function Window:SetGuiConnected(State)
+        SetGuiConnected(State)
+    end
+
+    function Window:IsGuiConnected()
+        return GuiConnected
+    end
+
+    function Window:SetGuiPartPosition(Part, Position)
+        assert(typeof(Position) == "UDim2", "Expected UDim2 for Position got: " .. typeof(Position))
+        local Object = GuiParts[Part]
+        if Object and not GuiLocked then Object.Position = Position end
+    end
+
+    function Window:GetGuiPart(Part)
+        return GuiParts[Part]
+    end
+
+    function Window:SetIcon(Icon)
+        local Resolved = Library:GetCustomIcon(Icon)
+        if not Resolved then return false end
+        Library:ApplyLucideIcon(WindowIcon, Resolved)
+        WindowInfo.Icon = Icon
+        return true
+    end
+
+    function Window:GetIcon()
+        return WindowInfo.Icon
+    end
+
+    function Window:ResetGuiLayout()
+        if GuiLocked then return end
+        SetGuiConnected(true)
     end
 
     function Window:ChangeTitle(title)
