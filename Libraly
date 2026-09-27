@@ -11351,6 +11351,9 @@ function Library:CreateWindow(WindowInfo)
         Tabs.Parent = SidebarHost
         Tabs.ZIndex = 52
         SidebarHost.Visible = Library.Toggled
+        SidebarHost.Active = Library.Toggled
+        Tabs.Visible = Library.Toggled
+        Tabs.Active = Library.Toggled
     end
 
     local function SetGuiConnected(State)
@@ -11416,6 +11419,7 @@ function Library:CreateWindow(WindowInfo)
             SidebarHost.Position = UDim2.fromOffset(absPos.X, absPos.Y)
             SidebarHost.Size = UDim2.fromOffset(absSize.X, math.max(120, absSize.Y))
             SidebarHost.Visible = Library.Toggled
+            SidebarHost.Active = Library.Toggled
             UpdateDetachedSidebar()
 
             MainFrame.Visible = Library.Toggled
@@ -14157,16 +14161,30 @@ function Library:CreateWindow(WindowInfo)
         end
 
         if not GuiConnected then
-            if GuiPartDetached.Sidebar then
-                Tabs.Visible = Library.Toggled
-            end
-            if GuiPartDetached.Content then
-                Container.Visible = Library.Toggled
-            end
+            SidebarHost.Visible = Library.Toggled
+            SidebarHost.Active = Library.Toggled
+            Tabs.Visible = Library.Toggled
+            Tabs.Active = Library.Toggled
+            Container.Visible = Library.Toggled
+            Container.Active = Library.Toggled
+        else
+            SidebarHost.Visible = false
+            SidebarHost.Active = false
+            Tabs.Visible = Library.Toggled
+            Tabs.Active = Library.Toggled
+            Container.Visible = Library.Toggled
+            Container.Active = Library.Toggled
         end
 
         if WindowInfo.UnlockMouseWhileOpen then
             ModalElement.Modal = Library.Toggled
+        end
+
+        SidebarHost.Active = Library.Toggled and not GuiConnected
+        if not Library.Toggled then
+            SidebarHost.Visible = false
+            Tabs.Active = false
+            Container.Active = false
         end
 
         if Library.Toggled and not Library.IsMobile then
