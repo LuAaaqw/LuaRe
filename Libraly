@@ -13165,31 +13165,48 @@ function Library:CreateWindow(WindowInfo)
         end
 
         function Tab:SetIcon(NewIcon: any)
+            -- Icon and text are independent objects. Changing one never changes the other.
             if not TabIcon then
                 TabIcon = New("ImageLabel", {
                     BackgroundTransparency = 1,
                     ImageColor3 = "AccentColor",
                     ImageTransparency = Library.ActiveTab == Tab and 0 or 0.5,
                     ScaleType = Enum.ScaleType.Fit,
-                    AnchorPoint = Vector2.new(0, 0.5),
-                    Position = UDim2.new(0, 0, 0.5, 0),
-                    Size = UDim2.fromOffset(IsCompact and 22 or 20, IsCompact and 22 or 20),
-                    Visible = not IsCompact,
+                    AnchorPoint = Vector2.new(0.5, 0.5),
+                    Position = GuiConnected and UDim2.new(0.5, 0, 0.5, 0) or UDim2.new(0.5, -34, 0.5, 0),
+                    Size = UDim2.fromOffset(20, 20),
+                    Visible = true,
                     Parent = ButtonHolder,
                 })
-                table.insert(Library.TabButtons, {
-                    Label = TabLabel,
-                    Padding = ButtonPadding,
-                    Icon = TabIcon,
-                    Button = TabButton,
-                })
+
+                -- Do not create/replace the text object here.
+                local found = false
+                for _, info in ipairs(Library.TabButtons) do
+                    if info.Button == TabButton then
+                        info.Icon = TabIcon
+                        found = true
+                        break
+                    end
+                end
+                if not found then
+                    table.insert(Library.TabButtons, {
+                        Label = TabLabel,
+                        Padding = ButtonPadding,
+                        Icon = TabIcon,
+                        Button = TabButton,
+                    })
+                end
             end
 
             local Resolved = Library:GetCustomIcon(NewIcon)
             if Resolved then
                 Library:ApplyLucideIcon(TabIcon, Resolved)
-                TabIcon.Visible = true
             end
+
+            -- Connected: icon only. Detached: icon + independent text.
+            TabIcon.Visible = true
+            TabIcon.AnchorPoint = Vector2.new(0.5, 0.5)
+            TabIcon.Position = GuiConnected and UDim2.new(0.5, 0, 0.5, 0) or UDim2.new(0.5, -34, 0.5, 0)
         end
 
         function Tab:GetIcon()
