@@ -11427,6 +11427,7 @@ function Library:CreateWindow(WindowInfo)
         if GuiConnected then
             AttachPart("Sidebar", Tabs)
             AttachPart("Content", Container)
+            MainFrame.Visible = true
             Tabs.Position = UDim2.fromOffset(0, 49)
             Tabs.Size = UDim2.new(0, InitialLeftWidth, 1, -70)
             Container.Position = UDim2.new(1, 0, 0, 49)
@@ -11438,6 +11439,7 @@ function Library:CreateWindow(WindowInfo)
             SaveRelativePartState()
             DetachPart("Sidebar", Tabs)
             DetachPart("Content", Container)
+            MainFrame.Visible = false
         end
 
         local Icon = Library:GetIcon(GuiConnected and "link" or "unlink")
@@ -11653,6 +11655,18 @@ function Library:CreateWindow(WindowInfo)
         return GuiParts[Part]
     end
 
+    function Window:SetGuiPartCorner(Part, Radius)
+        return SetPartCorner(Part, Radius)
+    end
+
+    function Window:SetGuiPartImage(Part, Image)
+        return SetPartImage(Part, Image)
+    end
+
+    function Window:ClearGuiPartImage(Part)
+        return SetPartImage(Part, nil)
+    end
+
     function Window:ConnectGui()
         SetGuiConnected(true)
     end
@@ -11675,6 +11689,7 @@ function Library:CreateWindow(WindowInfo)
 
     function Window:ResetGuiLayout()
         if GuiLocked then return end
+        MainFrame.Visible = true
         SetGuiConnected(true)
     end
 
