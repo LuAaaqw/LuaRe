@@ -13112,6 +13112,47 @@ function Library:CreateWindow(WindowInfo)
             TabButton.LayoutOrder = Order
         end
 
+        function Tab:SetText(Text: string)
+            Name = tostring(Text or "Tab")
+            TabLabel.Text = Name
+        end
+
+        function Tab:GetText()
+            return Name
+        end
+
+        function Tab:SetIcon(NewIcon: any)
+            if not TabIcon then
+                TabIcon = New("ImageLabel", {
+                    BackgroundTransparency = 1,
+                    ImageColor3 = "AccentColor",
+                    ImageTransparency = Library.ActiveTab == Tab and 0 or 0.5,
+                    ScaleType = Enum.ScaleType.Fit,
+                    AnchorPoint = Vector2.new(0, 0.5),
+                    Position = UDim2.new(0, 0, 0.5, 0),
+                    Size = UDim2.fromOffset(IsCompact and 22 or 20, IsCompact and 22 or 20),
+                    Visible = not IsCompact,
+                    Parent = ButtonHolder,
+                })
+                table.insert(Library.TabButtons, {
+                    Label = TabLabel,
+                    Padding = ButtonPadding,
+                    Icon = TabIcon,
+                    Button = TabButton,
+                })
+            end
+
+            local Resolved = Library:GetCustomIcon(NewIcon)
+            if Resolved then
+                Library:ApplyLucideIcon(TabIcon, Resolved)
+                TabIcon.Visible = not IsCompact
+            end
+        end
+
+        function Tab:GetIcon()
+            return TabIcon
+        end
+
         function Tab:SetTooltip(Text: string?)
             Tab.Tooltip = Text
 
