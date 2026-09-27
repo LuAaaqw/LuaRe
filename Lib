@@ -10787,8 +10787,6 @@ function Library:CreateWindow(WindowInfo)
     local WindowIcon
     local RightWrapper
     local SearchBox
-    local GuiLockButton
-    local GuiLockStroke
     local GuiLinkButton
     local GuiLinkStroke
     local CurrentTabInfo
@@ -11087,26 +11085,8 @@ function Library:CreateWindow(WindowInfo)
             Library:ApplyLucideIcon(SearchIconImage, SearchIcon)
         end
 
-        GuiLockButton = New("ImageButton", {
-            BackgroundColor3 = "MainColor",
-            AutoButtonColor = false,
-            Size = UDim2.fromOffset(32, 32),
-            ImageTransparency = 0.15,
-            Parent = RightWrapper,
-        })
-        table.insert(
-            Library.Corners,
-            New("UICorner", {
-                CornerRadius = UDim.new(0, WindowInfo.CornerRadius),
-                Parent = GuiLockButton,
-            })
-        )
-        GuiLockStroke = New("UIStroke", {
-            Color = "OutlineColor",
-            Parent = GuiLockButton,
-        })
-
         GuiLinkButton = New("ImageButton", {
+            Name = "DetachTabsButton",
             BackgroundColor3 = "MainColor",
             AutoButtonColor = false,
             Size = UDim2.fromOffset(32, 32),
@@ -11124,19 +11104,6 @@ function Library:CreateWindow(WindowInfo)
             Color = "OutlineColor",
             Parent = GuiLinkButton,
         })
-
-        if MoveIcon then
-            local MoveIconImage = New("ImageLabel", {
-                AnchorPoint = Vector2.new(1, 0.5),
-                ImageColor3 = "OutlineColor",
-                Position = UDim2.new(1, -10, 0.5, 0),
-                Size = UDim2.fromOffset(28, 28),
-                SizeConstraint = Enum.SizeConstraint.RelativeYY,
-                Parent = TopBar,
-            })
-            Library:ApplyLucideIcon(MoveIconImage, MoveIcon)
-        end
-
 
         BottomBackground = New("Frame", {
             AnchorPoint = Vector2.new(0, 1),
@@ -11257,13 +11224,18 @@ function Library:CreateWindow(WindowInfo)
     end
 
     local GuiParts = { Window = MainFrame, Header = TopBar, Sidebar = Tabs, Content = Container }
-    local GuiLocked = true
     local GuiConnected = true
     local GuiPartCorners = {}
     local GuiPartImages = {}
-    local GuiPartParents = {}
-    local GuiPartRelative = {}
-    local GuiPartDetached = { Sidebar = false, Content = false }
+    local OriginalMainAnchor = MainFrame.AnchorPoint
+    local OriginalMainPosition = MainFrame.Position
+    local OriginalMainSize = MainFrame.Size
+    local OriginalSidebarPosition = Tabs.Position
+    local OriginalSidebarSize = Tabs.Size
+    local OriginalContainerPosition = Container.Position
+    local OriginalContainerSize = Container.Size
+    local DetachedSidebarPosition
+    local DetachedSidebarSize
 
     local function CreatePartCorner(Name, Object, Radius)
         local Corner = New("UICorner", {
@@ -11275,8 +11247,8 @@ function Library:CreateWindow(WindowInfo)
         return Corner
     end
 
-    local SidebarCorner = CreatePartCorner("Sidebar", Tabs, WindowInfo.CornerRadius)
-    local ContentCorner = CreatePartCorner("Content", Container, WindowInfo.CornerRadius)
+    CreatePartCorner("Sidebar", Tabs, WindowInfo.CornerRadius)
+    CreatePartCorner("Content", Container, WindowInfo.CornerRadius)
 
     local SidebarImage = New("ImageLabel", {
         Name = "SidebarBackgroundImage",
@@ -11285,335 +11257,115 @@ function Library:CreateWindow(WindowInfo)
         ScaleType = Enum.ScaleType.Crop,
         Size = UDim2.fromScale(1, 1),
         ZIndex = 0,
-        Parent = MainFrame,
+        Parent = Tabs,
     })
-
-    local ContentImage = New("ImageLabel", {
-        Name = "ContentBackgroundImage",
-        BackgroundTransparency = 1,
-        ImageTransparency = 1,
-        ScaleType = Enum.ScaleType.Crop,
-        Size = UDim2.fromScale(1, 1),
-        ZIndex = 0,
-        Parent = MainFrame,
-    })
-
-    GuiPartImages.Sidebar = SidebarImage
-    GuiPartImages.Content = ContentImage
 
     local function SetPartImage(Name, Image)
-        local ImageObject = GuiPartImages[Name]
-        if not ImageObject then
+        local Object = GuiPartImages[Name]
+        if not Object then
             return false
         end
-
         if Image == nil or Image == "" then
-            ImageObject.Image = ""
-            ImageObject.ImageTransparency = 1
+            Object.Image = ""
+            Object.ImageTransparency = 1
             return true
         end
-
         local Value = tostring(Image)
         if not Value:find("rbxassetid://", 1, true) and not Value:find("https://", 1, true) then
             Value = "rbxassetid://" .. Value
         end
-
-        ImageObject.Image = Value
-        ImageObject.ImageTransparency = 0
+        Object.Image = Value
+        Object.ImageTransparency = 0
         return true
     end
+
+    GuiPartImages.Sidebar = SidebarImage
 
     local function SetPartCorner(Name, Radius)
         local Corner = GuiPartCorners[Name]
         if not Corner then
             return false
         end
-
-        Radius = math.clamp(tonumber(Radius) or 0, 0, 50)
-        Corner.CornerRadius = UDim.new(0, Radius)
+        Corner.CornerRadius = UDim.new(0, math.clamp(tonumber(Radius) or 0, 0, 50))
         return true
     end
 
-    local function UpdatePartBackgrounds()
-        local SidebarPos = Tabs.AbsolutePosition
-        local SidebarSize = Tabs.AbsoluteSize
-        local ContentPos = Container.AbsolutePosition
-        local ContentSize = Container.AbsoluteSize
-
-        if SidebarImage.Parent then
-            SidebarImage.Position = UDim2.fromOffset(SidebarPos.X, SidebarPos.Y)
-            SidebarImage.Size = UDim2.fromOffset(SidebarSize.X, SidebarSize.Y)
+    local function UpdateSidebarImage()
+        if SidebarImage and SidebarImage.Parent then
+            SidebarImage.Position = UDim2.fromScale(0, 0)
+            SidebarImage.Size = UDim2.fromScale(1, 1)
         end
-
-        if ContentImage.Parent then
-            ContentImage.Position = UDim2.fromOffset(ContentPos.X, ContentPos.Y)
-            ContentImage.Size = UDim2.fromOffset(ContentSize.X, ContentSize.Y)
-        end
-    end
-
-    local function SaveRelativePartState()
-        GuiPartRelative.Sidebar = {
-            Position = Tabs.Position,
-            Size = Tabs.Size,
-            AnchorPoint = Tabs.AnchorPoint,
-            Parent = MainFrame,
-        }
-        GuiPartRelative.Content = {
-            Position = Container.Position,
-            Size = Container.Size,
-            AnchorPoint = Container.AnchorPoint,
-            Parent = MainFrame,
-        }
-    end
-
-    SaveRelativePartState()
-
-    local function DetachPart(Name, Object)
-        if GuiPartDetached[Name] then
-            return
-        end
-
-        local AbsolutePosition = Object.AbsolutePosition
-        local AbsoluteSize = Object.AbsoluteSize
-
-        GuiPartParents[Name] = Object.Parent
-        GuiPartDetached[Name] = true
-
-        Object.AnchorPoint = Vector2.zero
-        Object.Parent = ScreenGui
-        Object.Position = UDim2.fromOffset(AbsolutePosition.X, AbsolutePosition.Y)
-        Object.Size = UDim2.fromOffset(AbsoluteSize.X, AbsoluteSize.Y)
-        Object.ZIndex = 10
-
-        if Name == "Sidebar" then
-            SidebarImage.Parent = ScreenGui
-            SidebarImage.Position = UDim2.fromOffset(AbsolutePosition.X, AbsolutePosition.Y)
-            SidebarImage.Size = UDim2.fromOffset(AbsoluteSize.X, AbsoluteSize.Y)
-            SidebarImage.ZIndex = 9
-        elseif Name == "Content" then
-            ContentImage.Parent = ScreenGui
-            ContentImage.Position = UDim2.fromOffset(AbsolutePosition.X, AbsolutePosition.Y)
-            ContentImage.Size = UDim2.fromOffset(AbsoluteSize.X, AbsoluteSize.Y)
-            ContentImage.ZIndex = 9
-        end
-    end
-
-    local function AttachPart(Name, Object)
-        if not GuiPartDetached[Name] then
-            return
-        end
-
-        local Relative = GuiPartRelative[Name]
-        local Parent = GuiPartParents[Name] or MainFrame
-
-        if Name == "Sidebar" then
-            SidebarImage.Parent = MainFrame
-        elseif Name == "Content" then
-            ContentImage.Parent = MainFrame
-        end
-
-        Object.Parent = Parent
-        Object.AnchorPoint = Relative.AnchorPoint
-        Object.Position = Relative.Position
-        Object.Size = Relative.Size
-        Object.ZIndex = 1
-        GuiPartDetached[Name] = false
     end
 
     local function SetGuiConnected(State)
-        GuiConnected = State == true
+        GuiConnected = State ~= false
         Library.GuiConnected = GuiConnected
 
         if GuiConnected then
-            AttachPart("Sidebar", Tabs)
-            MainFrame.Visible = Library.Toggled
-            Tabs.Visible = true
-            Container.Visible = true
-            Tabs.Position = UDim2.fromOffset(0, 49)
-            Tabs.Size = UDim2.new(0, InitialLeftWidth, 1, -70)
-            Container.Position = UDim2.new(1, 0, 0, 49)
-            Container.Size = UDim2.new(1, -InitialLeftWidth - 1, 1, -70)
+            Tabs.Parent = MainFrame
             Tabs.AnchorPoint = Vector2.zero
+            Tabs.Position = OriginalSidebarPosition
+            Tabs.Size = OriginalSidebarSize
+            Tabs.ZIndex = 1
+            MainFrame.AnchorPoint = OriginalMainAnchor
+            MainFrame.Position = OriginalMainPosition
+            MainFrame.Size = OriginalMainSize
+            Container.Position = OriginalContainerPosition
+            Container.Size = OriginalContainerSize
             Container.AnchorPoint = Vector2.new(1, 0)
-            GuiPartDetached.Content = false
-            SaveRelativePartState()
+            Container.Parent = MainFrame
+            Container.Visible = true
+            Tabs.Visible = true
+            SidebarImage.Parent = Tabs
+            SidebarImage.Visible = true
+            UpdateSidebarImage()
         else
-            SaveRelativePartState()
-            DetachPart("Sidebar", Tabs)
-            GuiPartDetached.Content = false
+            local absPos = Tabs.AbsolutePosition
+            local absSize = Tabs.AbsoluteSize
+            DetachedSidebarPosition = absPos
+            DetachedSidebarSize = absSize
+
+            Tabs.Parent = ScreenGui
+            Tabs.AnchorPoint = Vector2.zero
+            Tabs.Position = UDim2.fromOffset(absPos.X, absPos.Y)
+            Tabs.Size = UDim2.fromOffset(absSize.X, absSize.Y)
+            Tabs.ZIndex = 20
+            Tabs.Visible = Library.Toggled
+
+            SidebarImage.Parent = Tabs
+            SidebarImage.ZIndex = 19
+            SidebarImage.Visible = true
+            UpdateSidebarImage()
+
+            local mainAbsPos = MainFrame.AbsolutePosition
+            local mainAbsSize = MainFrame.AbsoluteSize
+            MainFrame.AnchorPoint = Vector2.zero
+            MainFrame.Position = UDim2.fromOffset(mainAbsPos.X + absSize.X, mainAbsPos.Y)
+            MainFrame.Size = UDim2.fromOffset(math.max(100, mainAbsSize.X - absSize.X), mainAbsSize.Y)
+            Container.AnchorPoint = Vector2.zero
+            Container.Position = UDim2.fromOffset(0, 49)
+            Container.Size = UDim2.new(1, 0, 1, -70)
             Container.Parent = MainFrame
             Container.Visible = Library.Toggled
             MainFrame.Visible = Library.Toggled
-            Tabs.Visible = Library.Toggled
         end
 
         local Icon = Library:GetIcon(GuiConnected and "link" or "unlink")
         if GuiLinkButton and Icon then
             Library:ApplyLucideIcon(GuiLinkButton, Icon)
-            GuiLinkButton.ImageTransparency = GuiConnected and 0 or 0.15
+            GuiLinkButton.ImageTransparency = 0.05
         end
         if GuiLinkStroke then
-            GuiLinkStroke.Color = GuiConnected and Library.Scheme.AccentColor or Library.Scheme.OutlineColor
-        end
-    end
-
-    local function SetGuiLocked(State)
-        GuiLocked = State == true
-        Library.GuiLocked = GuiLocked
-
-        local Icon = Library:GetIcon(GuiLocked and "lock" or "lock-open")
-        if GuiLockButton and Icon then
-            Library:ApplyLucideIcon(GuiLockButton, Icon)
-            GuiLockButton.ImageTransparency = GuiLocked and 0 or 0.15
-        end
-        if GuiLockStroke then
-            GuiLockStroke.Color = GuiLocked and Library.Scheme.AccentColor or Library.Scheme.OutlineColor
+            GuiLinkStroke.Color = Library.Scheme.AccentColor
         end
     end
 
     local function SetGuiPartPosition(Name, Position)
-        if GuiLocked then
+        if Name ~= "Sidebar" or GuiConnected or typeof(Position) ~= "UDim2" then
             return false
         end
-
-        local Object = GuiParts[Name]
-        if Name ~= "Sidebar" then
-            return false
-        end
-        if not Object or not GuiPartDetached[Name] then
-            return false
-        end
-
-        Object.Position = Position
+        Tabs.Position = Position
         return true
-    end
-
-    local SidebarHandle = New("ImageButton", {
-        Name = "SidebarMoveHandle",
-        BackgroundColor3 = "MainColor",
-        AutoButtonColor = false,
-        Position = UDim2.fromOffset(6, 53),
-        Size = UDim2.fromOffset(28, 28),
-        ImageTransparency = 0.1,
-        Visible = false,
-        ZIndex = 30,
-        Parent = ScreenGui,
-    })
-    table.insert(Library.Corners, New("UICorner", {
-        CornerRadius = UDim.new(0, 6),
-        Parent = SidebarHandle,
-    }))
-    local SidebarHandleIcon = Library:GetIcon("move")
-    if SidebarHandleIcon then
-        Library:ApplyLucideIcon(SidebarHandle, SidebarHandleIcon)
-    end
-
-    local ContentHandle = New("ImageButton", {
-        Name = "ContentMoveHandle",
-        BackgroundColor3 = "MainColor",
-        AutoButtonColor = false,
-        Position = UDim2.fromOffset(6, 53),
-        Size = UDim2.fromOffset(28, 28),
-        ImageTransparency = 0.1,
-        Visible = false,
-        ZIndex = 30,
-        Parent = ScreenGui,
-    })
-    table.insert(Library.Corners, New("UICorner", {
-        CornerRadius = UDim.new(0, 6),
-        Parent = ContentHandle,
-    }))
-    ContentHandle.Visible = false
-
-    local SidebarDragRegion = New("Frame", {
-        Name = "SidebarDragRegion",
-        BackgroundTransparency = 1,
-        BorderSizePixel = 0,
-        Position = UDim2.fromOffset(0, 0),
-        Size = UDim2.new(1, 0, 0, 34),
-        Visible = false,
-        Active = true,
-        ZIndex = 31,
-        Parent = ScreenGui,
-    })
-
-    local function UpdateGuiHandles()
-        if not GuiPartDetached.Sidebar and not GuiPartDetached.Content then
-            SidebarHandle.Visible = false
-            ContentHandle.Visible = false
-            return
-        end
-
-        SidebarHandle.Visible = false
-        ContentHandle.Visible = false
-        SidebarDragRegion.Visible = GuiPartDetached.Sidebar and not GuiConnected
-
-        if SidebarDragRegion.Visible then
-            SidebarDragRegion.Position = UDim2.fromOffset(Tabs.AbsolutePosition.X, Tabs.AbsolutePosition.Y)
-            SidebarDragRegion.Size = UDim2.fromOffset(Tabs.AbsoluteSize.X, 34)
-        end
-    end
-
-    local function MakeDetachedDraggable(Name, Object, Handle)
-        local Dragging = false
-        local StartInput
-        local StartPosition
-
-        Handle.InputBegan:Connect(function(Input)
-            if GuiConnected then
-                return
-            end
-            if Input.UserInputType ~= Enum.UserInputType.MouseButton1 and Input.UserInputType ~= Enum.UserInputType.Touch then
-                return
-            end
-
-            Dragging = true
-            StartInput = Input
-            StartPosition = Object.Position
-
-            Input.Changed:Connect(function()
-                if Input.UserInputState == Enum.UserInputState.End then
-                    Dragging = false
-                end
-            end)
-        end)
-
-        Library:GiveSignal(UserInputService.InputChanged:Connect(function(Input)
-            if not Dragging or GuiConnected then
-                return
-            end
-            if Input.UserInputType ~= Enum.UserInputType.MouseMovement and Input.UserInputType ~= Enum.UserInputType.Touch then
-                return
-            end
-
-            local Delta = Input.Position - StartInput.Position
-            Object.Position = UDim2.fromOffset(
-                StartPosition.X.Offset + Delta.X,
-                StartPosition.Y.Offset + Delta.Y
-            )
-        end))
-    end
-
-    MakeDetachedDraggable("Sidebar", Tabs, SidebarDragRegion)
-
-    Library:GiveSignal(RunService.RenderStepped:Connect(function()
-        if MainFrame and MainFrame.Parent then
-            if not GuiPartDetached.Sidebar and not GuiPartDetached.Content then
-                SidebarImage.Position = Tabs.Position
-                SidebarImage.Size = Tabs.Size
-                ContentImage.Position = Container.Position
-                ContentImage.Size = Container.Size
-            else
-                UpdatePartBackgrounds()
-            end
-            UpdateGuiHandles()
-        end
-    end))
-
-    if GuiLockButton and GuiLockButton:IsA("GuiButton") then
-        GuiLockButton.MouseButton1Click:Connect(function()
-            SetGuiLocked(not GuiLocked)
-        end)
     end
 
     if GuiLinkButton and GuiLinkButton:IsA("GuiButton") then
@@ -11623,15 +11375,12 @@ function Library:CreateWindow(WindowInfo)
     end
 
     SetGuiConnected(true)
-    GuiLocked = false
-    Library.GuiLocked = false
 
+    Library.GuiParts = GuiParts
+    Library.GuiConnected = GuiConnected
 
     local Window = {}
     local Fading = false
-    Library.GuiParts = GuiParts
-    Library.GuiLocked = GuiLocked
-    Library.GuiConnected = GuiConnected
 
     local function SetUICorner(UICorner, Corner, HalfValue)
         local Current = UICorner[Corner]
@@ -11643,11 +11392,11 @@ function Library:CreateWindow(WindowInfo)
     end
 
     function Window:SetGuiLocked(State)
-        SetGuiLocked(State)
+        return true
     end
 
     function Window:IsGuiLocked()
-        return GuiLocked
+        return false
     end
 
     function Window:SetGuiConnected(State)
@@ -11659,12 +11408,7 @@ function Library:CreateWindow(WindowInfo)
     end
 
     function Window:SetGuiPartPosition(Part, Position)
-        assert(typeof(Position) == "UDim2", "Expected UDim2 for Position got: " .. typeof(Position))
-        local Object = GuiParts[Part]
-        if Object and not GuiLocked and not GuiConnected then
-            Object.Position = Position
-            UpdateGuiHandles()
-        end
+        return SetGuiPartPosition(Part, Position)
     end
 
     function Window:GetGuiPart(Part)
@@ -11693,7 +11437,9 @@ function Library:CreateWindow(WindowInfo)
 
     function Window:SetIcon(Icon)
         local Resolved = Library:GetCustomIcon(Icon)
-        if not Resolved then return false end
+        if not Resolved or not WindowIcon then
+            return false
+        end
         Library:ApplyLucideIcon(WindowIcon, Resolved)
         WindowInfo.Icon = Icon
         return true
@@ -11704,8 +11450,6 @@ function Library:CreateWindow(WindowInfo)
     end
 
     function Window:ResetGuiLayout()
-        if GuiLocked then return end
-        MainFrame.Visible = true
         SetGuiConnected(true)
     end
 
@@ -14318,11 +14062,11 @@ function Library:CreateWindow(WindowInfo)
             end
 
             task.delay(FadeTime, function()
-                MainFrame.Visible = Library.Toggled and GuiConnected
+                MainFrame.Visible = Library.Toggled
                 Fading = false
             end)
         else
-            MainFrame.Visible = Library.Toggled and GuiConnected
+            MainFrame.Visible = Library.Toggled
         end
 
         if not GuiConnected then
