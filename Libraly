@@ -11240,6 +11240,36 @@ function Library:CreateWindow(WindowInfo)
         Parent = SidebarHost,
     })
 
+    local SidebarHostStroke = New("UIStroke", {
+        Color = "OutlineColor",
+        Thickness = 1,
+        Parent = SidebarHost,
+    })
+
+    local SidebarHeader = New("Frame", {
+        Name = "SidebarHeader",
+        BackgroundColor3 = "MainColor",
+        BorderSizePixel = 0,
+        Position = UDim2.fromOffset(0, 0),
+        Size = UDim2.new(1, 0, 0, 48),
+        ZIndex = 53,
+        Parent = SidebarHost,
+    })
+
+    local SidebarHeaderCorner = New("UICorner", {
+        CornerRadius = UDim.new(0, WindowInfo.CornerRadius),
+        Parent = SidebarHeader,
+    })
+
+    local SidebarHeaderFill = New("Frame", {
+        BackgroundColor3 = "MainColor",
+        BorderSizePixel = 0,
+        Position = UDim2.fromOffset(0, 24),
+        Size = UDim2.new(1, 0, 0, 24),
+        ZIndex = 53,
+        Parent = SidebarHeader,
+    })
+
     local SidebarImage = New("ImageLabel", {
         Name = "SidebarBackgroundImage",
         BackgroundTransparency = 1,
@@ -11306,9 +11336,11 @@ function Library:CreateWindow(WindowInfo)
                 d.ZIndex = math.max(53, d.ZIndex)
             end
         end
-        SidebarImage.Position = UDim2.fromScale(0, 0)
+        SidebarImage.Position = UDim2.fromOffset(0, 0)
         SidebarImage.Size = UDim2.fromScale(1, 1)
         SidebarImage.ZIndex = 51
+        SidebarHeader.ZIndex = 53
+        SidebarHeaderFill.ZIndex = 53
         TitleHolder.Parent = SidebarHost
         TitleHolder.Position = UDim2.fromOffset(0, 0)
         TitleHolder.Size = UDim2.new(1, 0, 0, 48)
@@ -11348,6 +11380,8 @@ function Library:CreateWindow(WindowInfo)
             MainFrame.AnchorPoint = OriginalMainAnchor
             MainFrame.Position = OriginalMainPosition
             MainFrame.Size = OriginalMainSize
+            RightWrapper.Size = UDim2.new(1, -InitialLeftWidth - 57 - 1, 1, -16)
+            RightWrapper.Position = UDim2.new(1, -49, 0.5, 0)
             Container.Position = OriginalContainerPosition
             Container.Size = OriginalContainerSize
             Container.AnchorPoint = Vector2.new(1, 0)
@@ -11371,7 +11405,13 @@ function Library:CreateWindow(WindowInfo)
             UpdateDetachedSidebar()
 
             MainFrame.Visible = Library.Toggled
+            Container.Parent = MainFrame
+            Container.AnchorPoint = Vector2.new(0, 0)
+            Container.Position = UDim2.fromOffset(0, 49)
+            Container.Size = UDim2.new(1, 0, 1, -70)
             Container.Visible = Library.Toggled
+            RightWrapper.Size = UDim2.new(1, -57, 1, -16)
+            RightWrapper.Position = UDim2.new(1, -49, 0.5, 0)
         end
 
         local Icon = Library:GetIcon(GuiConnected and "link" or "unlink")
