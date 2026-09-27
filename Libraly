@@ -10787,6 +10787,10 @@ function Library:CreateWindow(WindowInfo)
     local WindowIcon
     local RightWrapper
     local SearchBox
+    local GuiLockButton
+    local GuiLockStroke
+    local GuiLinkButton
+    local GuiLinkStroke
     local CurrentTabInfo
     local CurrentTabLabel
     local CurrentTabDescription
@@ -11083,7 +11087,7 @@ function Library:CreateWindow(WindowInfo)
             Library:ApplyLucideIcon(SearchIconImage, SearchIcon)
         end
 
-        local GuiLockButton = New("ImageButton", {
+        GuiLockButton = New("ImageButton", {
             BackgroundColor3 = "MainColor",
             AutoButtonColor = false,
             Size = UDim2.fromOffset(32, 32),
@@ -11097,12 +11101,12 @@ function Library:CreateWindow(WindowInfo)
                 Parent = GuiLockButton,
             })
         )
-        local GuiLockStroke = New("UIStroke", {
+        GuiLockStroke = New("UIStroke", {
             Color = "OutlineColor",
             Parent = GuiLockButton,
         })
 
-        local GuiLinkButton = New("ImageButton", {
+        GuiLinkButton = New("ImageButton", {
             BackgroundColor3 = "MainColor",
             AutoButtonColor = false,
             Size = UDim2.fromOffset(32, 32),
@@ -11116,7 +11120,7 @@ function Library:CreateWindow(WindowInfo)
                 Parent = GuiLinkButton,
             })
         )
-        local GuiLinkStroke = New("UIStroke", {
+        GuiLinkStroke = New("UIStroke", {
             Color = "OutlineColor",
             Parent = GuiLinkButton,
         })
