@@ -270,13 +270,13 @@ local Library = {
     OriginalMinSize = Vector2.new(480, 360),
     MinSize = Vector2.new(480, 360),
     DPIScale = 1,
-    CornerRadius = 4,
+    CornerRadius = 20,
 
 
     IsLightTheme = false,
     Scheme = {
-        BackgroundColor = Color3.fromRGB(5, 6, 9),
-        MainColor = Color3.fromRGB(5, 6, 9),
+        BackgroundColor = Color3.fromRGB(255, 255, 255),
+        MainColor = Color3.fromRGB(255, 255, 255),
         AccentColor = Color3.fromRGB(255, 140, 0),
         OutlineColor = Color3.fromRGB(255, 255, 255),
         FontColor = Color3.fromRGB(0, 0, 0),
@@ -392,7 +392,7 @@ local Templates = {
         SearchbarSize = UDim2.fromScale(1, 1),
         GlobalSearch = false,
 
-        CornerRadius = 4,
+        CornerRadius = 20,
         NotifySide = "Right",
         ShowCustomCursor = true,
 
@@ -11455,6 +11455,7 @@ function Library:CreateWindow(WindowInfo)
         end
         Object.Image = Value
         Object.ImageTransparency = 0
+        WindowInfo.SidebarImage = Value
         return true
     end
 
@@ -11486,7 +11487,7 @@ function Library:CreateWindow(WindowInfo)
         end
 
         local ImageHeight = math.max(1, tonumber(SidebarImageFrame:GetAttribute("ImageHeight")) or 220)
-        local Gap = 40
+        local Gap = 25
         local TargetPosition
         local TargetWidth
 
@@ -12174,6 +12175,8 @@ function Library:CreateWindow(WindowInfo)
         return {
             ShowCustomCursor = WindowInfo.ShowCustomCursor ~= false,
             ToggleWindowAnimation = Anim.ToggleWindow == true,
+            DPIScale = math.round((Library.DPIScale or 1) * 100),
+            SidebarImage = WindowInfo.SidebarImage or "rbxassetid://7831350554",
         }
     end
 
@@ -12187,6 +12190,14 @@ function Library:CreateWindow(WindowInfo)
             if Library.Cursor then
                 Library.Cursor.Enabled = WindowInfo.ShowCustomCursor
             end
+        end
+
+        if Settings.DPIScale ~= nil then
+            Library:SetDPIScale(math.clamp(tonumber(Settings.DPIScale) or 100, 50, 200))
+        end
+
+        if Settings.SidebarImage ~= nil and self.SetSidebarImage then
+            self:SetSidebarImage(Settings.SidebarImage)
         end
 
         local Animations = WindowInfo.Animations or {}
@@ -15067,12 +15078,12 @@ function Library:CreateWindow(WindowInfo)
     end))
 
 
-    -- LuaRe defaults: black GUI, 75% transparency, white outline.
+    -- LuaRe defaults: white GUI, 75%% transparency, white outline.
     Window:SetGuiTransparency(WindowInfo.GuiTransparency or 0.75)
-    Library.Scheme.BackgroundColor = Color3.fromRGB(5, 6, 9)
-    Library.Scheme.MainColor = Color3.fromRGB(5, 6, 9)
+    Library.Scheme.BackgroundColor = Color3.fromRGB(255, 255, 255)
+    Library.Scheme.MainColor = Color3.fromRGB(255, 255, 255)
     Library.Scheme.OutlineColor = Color3.fromRGB(255, 255, 255)
-    Library.Scheme.FontColor = Color3.fromRGB(255, 255, 255)
+    Library.Scheme.FontColor = Color3.fromRGB(0, 0, 0)
     Library:UpdateColorsUsingRegistry()
 
     Window.MainFrame = MainFrame
