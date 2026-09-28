@@ -275,11 +275,11 @@ local Library = {
 
     IsLightTheme = false,
     Scheme = {
-        BackgroundColor = Color3.fromRGB(0, 0, 0),
-        MainColor = Color3.fromRGB(5, 5, 5),
+        BackgroundColor = Color3.fromRGB(255, 255, 255),
+        MainColor = Color3.fromRGB(255, 255, 255),
         AccentColor = Color3.fromRGB(255, 140, 0),
-        OutlineColor = Color3.fromRGB(255, 140, 0),
-        FontColor = Color3.fromRGB(235, 238, 245),
+        OutlineColor = Color3.fromRGB(255, 255, 255),
+        FontColor = Color3.fromRGB(0, 0, 0),
         Font = Font.fromEnum(Enum.Font.Code),
 
         RedColor = Color3.fromRGB(255, 82, 98),
@@ -421,7 +421,7 @@ local Templates = {
 
         BackgroundImage = "",
         SidebarImage = "rbxassetid://7831350554",
-        GuiTransparency = 0,
+        GuiTransparency = 0.75,
 
 
         Animations = {
@@ -10341,6 +10341,18 @@ function Library:Notify(...)
         Data.SoundId = select(3, ...)
         Data.Volume = select(4, ...) or 3
     end
+    -- Notifications always expose the fixed library name and current script name.
+    if Library.Window and Library.Window.GetDisplayTitle then
+        local Header = Library.Window:GetDisplayTitle()
+        if Data.Title and Data.Title ~= "" then
+            Data.Title = Header .. " | " .. Data.Title
+        else
+            Data.Title = Header
+        end
+    else
+        Data.Title = Data.Title or "LuaRe"
+    end
+
     Data.Destroyed = false
 
     local DeletedInstance = false
@@ -10723,6 +10735,8 @@ end
 function Library:CreateWindow(WindowInfo)
     WindowInfo = Library:Validate(WindowInfo, Templates.Window)
     WindowInfo.Title = WindowInfo.Title or "LuaRe"
+    WindowInfo.ScriptTitle = WindowInfo.Title
+    WindowInfo.DisplayTitle = "LuaRe | " .. WindowInfo.ScriptTitle
     WindowInfo.Footer = WindowInfo.Footer or "LuaRe Library"
     WindowInfo.Icon = WindowInfo.Icon or 121640081002120
     local ViewportSize: Vector2 = workspace.CurrentCamera.ViewportSize
@@ -10967,7 +10981,7 @@ function Library:CreateWindow(WindowInfo)
         end
 
         local X = Library:GetTextBounds(
-            WindowInfo.Title,
+            WindowInfo.DisplayTitle,
             Library.Scheme.Font,
             20,
             (TitleHolder.AbsoluteSize.X / Library.DPIScale) - (WindowInfo.Icon and WindowInfo.IconSize.X.Offset + 6 or 0) - 12
@@ -10975,7 +10989,7 @@ function Library:CreateWindow(WindowInfo)
         WindowTitle = New("TextLabel", {
             BackgroundTransparency = 1,
             Size = UDim2.new(0, X, 1, 0),
-            Text = WindowInfo.Title,
+            Text = WindowInfo.DisplayTitle,
             TextSize = 20,
             Parent = TitleHolder,
         })
@@ -11472,7 +11486,7 @@ function Library:CreateWindow(WindowInfo)
         end
 
         local ImageHeight = math.max(1, tonumber(SidebarImageFrame:GetAttribute("ImageHeight")) or 220)
-        local Gap = 10
+        local Gap = 25
         local TargetPosition
         local TargetWidth
 
@@ -11972,8 +11986,18 @@ function Library:CreateWindow(WindowInfo)
     function Window:ChangeTitle(title)
         assert(typeof(title) == "string", "Expected string for title got: " .. typeof(title))
 
-        WindowTitle.Text = title
+        WindowInfo.ScriptTitle = title
         WindowInfo.Title = title
+        WindowInfo.DisplayTitle = "LuaRe | " .. title
+        WindowTitle.Text = WindowInfo.DisplayTitle
+    end
+
+    function Window:GetScriptTitle()
+        return WindowInfo.ScriptTitle or WindowInfo.Title
+    end
+
+    function Window:GetDisplayTitle()
+        return "LuaRe | " .. (WindowInfo.ScriptTitle or WindowInfo.Title or "LuaRe")
     end
 
     function Window:SetBackgroundImage(Image: string)
@@ -12148,28 +12172,8 @@ function Library:CreateWindow(WindowInfo)
     function Window:GetThemeSettings()
         local Anim = WindowInfo.Animations or {}
         return {
-            GuiTransparency = WindowInfo.GuiTransparency or 0,
-            CornerRadius = Library.CornerRadius or WindowInfo.CornerRadius or 4,
-            SidebarWidth = Window:GetSidebarWidth(),
-            SidebarCompacted = Window:IsSidebarCompacted(),
-            SidebarImage = WindowInfo.SidebarImage or "rbxassetid://7831350554",
-            SidebarImageTransparency = SidebarImage.ImageTransparency or 0,
-            SidebarImageHeight = tonumber(SidebarImageFrame:GetAttribute("ImageHeight")) or 220,
-            AlwaysOnTop = WindowInfo.AlwaysOnTop == true,
-            Snapping = WindowInfo.Snapping == true,
-            SnapDistance = WindowInfo.SnapDistance or 28,
-            SnapMargin = WindowInfo.SnapMargin or 8,
-            SnapAvoidCoreGui = WindowInfo.SnapAvoidCoreGui ~= false,
             ShowCustomCursor = WindowInfo.ShowCustomCursor ~= false,
-            UnlockMouseWhileOpen = WindowInfo.UnlockMouseWhileOpen ~= false,
-            TabTransitionTime = WindowInfo.TabTransitionTime or 0.22,
-            TabSwipeOffset = WindowInfo.TabSwipeOffset or 26,
-            TabSwipeFrom = WindowInfo.TabSwipeFrom or "bottom",
             ToggleWindowAnimation = Anim.ToggleWindow == true,
-            TabSwitchAnimation = Anim.TabSwitch == true,
-            GroupboxAnimation = Anim.Groupbox == true,
-            DropdownAnimation = Anim.Dropdown == true,
-            KeyPickerAnimation = Anim.KeyPicker == true,
         }
     end
 
@@ -12178,38 +12182,16 @@ function Library:CreateWindow(WindowInfo)
             return false
         end
 
-        if Settings.DPIScale ~= nil then
-            Library:SetDPIScale(math.clamp(tonumber(Settings.DPIScale) or 100, 50, 200))
-        end
-        if Settings.CornerRadius ~= nil then self:SetCornerRadius(tonumber(Settings.CornerRadius) or 4) end
-        if Settings.GuiTransparency ~= nil then self:SetGuiTransparency(tonumber(Settings.GuiTransparency) or 0) end
-        if Settings.SidebarWidth ~= nil then self:SetSidebarWidth(tonumber(Settings.SidebarWidth) or WindowInfo.SidebarWidth) end
-        if Settings.SidebarCompacted ~= nil then self:SetCompact(Settings.SidebarCompacted == true) end
-        if Settings.SidebarImage ~= nil then self:SetSidebarImage(Settings.SidebarImage) end
-        if Settings.SidebarImageTransparency ~= nil then self:SetSidebarImageTransparency(Settings.SidebarImageTransparency) end
-        if Settings.SidebarImageHeight ~= nil then self:SetSidebarImageSize(Settings.SidebarImageHeight) end
-        if Settings.AlwaysOnTop ~= nil then self:SetAlwaysOnTop(Settings.AlwaysOnTop == true) end
-        if Settings.Snapping ~= nil or Settings.SnapDistance ~= nil or Settings.SnapMargin ~= nil or Settings.SnapAvoidCoreGui ~= nil then
-            self:SetSnapping(Settings.Snapping == true, Settings.SnapDistance, Settings.SnapMargin, Settings.SnapAvoidCoreGui)
-        end
         if Settings.ShowCustomCursor ~= nil then
             WindowInfo.ShowCustomCursor = Settings.ShowCustomCursor == true
             if Library.Cursor then
                 Library.Cursor.Enabled = WindowInfo.ShowCustomCursor
             end
         end
-        if Settings.UnlockMouseWhileOpen ~= nil then
-            WindowInfo.UnlockMouseWhileOpen = Settings.UnlockMouseWhileOpen == true
-        end
 
-        local Animations = {
-            ToggleWindow = Settings.ToggleWindowAnimation == true,
-            TabSwitch = Settings.TabSwitchAnimation == true,
-            Groupbox = Settings.GroupboxAnimation == true,
-            Dropdown = Settings.DropdownAnimation == true,
-            KeyPicker = Settings.KeyPickerAnimation == true,
-        }
-        self:SetAnimations(Animations, Settings.TabTransitionTime, Settings.TabSwipeOffset, Settings.TabSwipeFrom)
+        local Animations = WindowInfo.Animations or {}
+        Animations.ToggleWindow = Settings.ToggleWindowAnimation == true
+        self:SetAnimations(Animations)
         return true
     end
 
@@ -15084,6 +15066,14 @@ function Library:CreateWindow(WindowInfo)
         Library.IsRobloxFocused = false
     end))
 
+
+    -- LuaRe defaults: white GUI, 75%% transparency, white outline.
+    Window:SetGuiTransparency(WindowInfo.GuiTransparency or 0.75)
+    Library.Scheme.BackgroundColor = Color3.fromRGB(255, 255, 255)
+    Library.Scheme.MainColor = Color3.fromRGB(255, 255, 255)
+    Library.Scheme.OutlineColor = Color3.fromRGB(255, 255, 255)
+    Library.Scheme.FontColor = Color3.fromRGB(0, 0, 0)
+    Library:UpdateColorsUsingRegistry()
 
     Window.MainFrame = MainFrame
     Library.Window = Window
