@@ -275,8 +275,8 @@ local Library = {
 
     IsLightTheme = false,
     Scheme = {
-        BackgroundColor = Color3.fromRGB(255, 255, 255),
-        MainColor = Color3.fromRGB(255, 255, 255),
+        BackgroundColor = Color3.fromRGB(5, 6, 9),
+        MainColor = Color3.fromRGB(5, 6, 9),
         AccentColor = Color3.fromRGB(255, 140, 0),
         OutlineColor = Color3.fromRGB(255, 255, 255),
         FontColor = Color3.fromRGB(0, 0, 0),
@@ -11486,7 +11486,7 @@ function Library:CreateWindow(WindowInfo)
         end
 
         local ImageHeight = math.max(1, tonumber(SidebarImageFrame:GetAttribute("ImageHeight")) or 220)
-        local Gap = 25
+        local Gap = 40
         local TargetPosition
         local TargetWidth
 
@@ -15067,12 +15067,12 @@ function Library:CreateWindow(WindowInfo)
     end))
 
 
-    -- LuaRe defaults: white GUI, 75%% transparency, white outline.
+    -- LuaRe defaults: black GUI, 75% transparency, white outline.
     Window:SetGuiTransparency(WindowInfo.GuiTransparency or 0.75)
-    Library.Scheme.BackgroundColor = Color3.fromRGB(255, 255, 255)
-    Library.Scheme.MainColor = Color3.fromRGB(255, 255, 255)
+    Library.Scheme.BackgroundColor = Color3.fromRGB(5, 6, 9)
+    Library.Scheme.MainColor = Color3.fromRGB(5, 6, 9)
     Library.Scheme.OutlineColor = Color3.fromRGB(255, 255, 255)
-    Library.Scheme.FontColor = Color3.fromRGB(0, 0, 0)
+    Library.Scheme.FontColor = Color3.fromRGB(255, 255, 255)
     Library:UpdateColorsUsingRegistry()
 
     Window.MainFrame = MainFrame
