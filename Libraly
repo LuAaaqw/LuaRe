@@ -11394,8 +11394,15 @@ function Library:CreateWindow(WindowInfo)
                 IconObject.Size = UDim2.fromOffset(20, 20)
 
                 if GuiConnected then
-                    -- Connected mode: icon is completely independent from the text.
+                    -- Connected mode: icon only, always centered in its own button.
                     IconObject.Position = UDim2.new(0.5, 0, 0.5, 0)
+                    IconObject.Visible = true
+                    IconObject.ZIndex = 103
+                    if Button then
+                        Button.Visible = true
+                        Button.Active = true
+                        Button.ZIndex = 102
+                    end
                 elseif Button and Label then
                     -- Detached mode: center the icon+text group as one visual unit.
                     -- The icon is moved farther left automatically when the text is long.
@@ -11461,11 +11468,15 @@ function Library:CreateWindow(WindowInfo)
             Tabs.Size = UDim2.new(0, SavedDividerWidth, 1, -70)
             Tabs.Visible = true
             Tabs.Active = true
-            Tabs.ZIndex = 50
+            -- Connected layout: keep the tab rail above Content.
+            Tabs.Visible = true
+            Tabs.Active = true
+            Tabs.ZIndex = 100
+            Tabs.CanvasPosition = Vector2.zero
             for _, Descendant in Tabs:GetDescendants() do
                 if Descendant:IsA("GuiObject") then
                     Descendant.Visible = true
-                    Descendant.ZIndex = math.max(51, Descendant.ZIndex)
+                    Descendant.ZIndex = 101
                     if Descendant:IsA("GuiButton") then
                         Descendant.Active = true
                     end
@@ -11510,10 +11521,11 @@ function Library:CreateWindow(WindowInfo)
             Container.AnchorPoint = Vector2.new(1, 0)
             Container.Position = UDim2.new(1, 0, 0, 70)
             Container.Size = UDim2.new(1, -SafeSidebarWidth - 1, 1, -70)
-            Container.ZIndex = 5
+            -- Content stays below the connected tab rail.
+            Container.ZIndex = 10
             for _, Descendant in Container:GetDescendants() do
                 if Descendant:IsA("GuiObject") then
-                    Descendant.ZIndex = math.min(Descendant.ZIndex, 6)
+                    Descendant.ZIndex = math.min(Descendant.ZIndex, 11)
                 end
             end
             Container.Visible = Library.Toggled
@@ -11570,11 +11582,12 @@ function Library:CreateWindow(WindowInfo)
         if GuiConnected then
             Tabs.Visible = true
             Tabs.Active = true
-            Tabs.ZIndex = 50
+            Tabs.ZIndex = 100
+            Tabs.CanvasPosition = Vector2.zero
             for _, Descendant in Tabs:GetDescendants() do
                 if Descendant:IsA("GuiObject") then
                     Descendant.Visible = true
-                    Descendant.ZIndex = math.max(51, Descendant.ZIndex)
+                    Descendant.ZIndex = 101
                 end
             end
         end
