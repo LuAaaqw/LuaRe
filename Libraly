@@ -15016,6 +15016,24 @@ function Library:CreateWindow(WindowInfo)
     end))
 
 
+    -- Theme helper methods used by GUI Settings.
+    -- Keep them small and registry-based so every themed instance updates consistently.
+    if not Window.SetMainColor then
+        function Window:SetMainColor(Color)
+            assert(typeof(Color) == "Color3", "Color must be a Color3 value.")
+            Library.Scheme.MainColor = Color
+            Library:UpdateColorsUsingRegistry()
+        end
+    end
+
+    if not Window.SetFontColor then
+        function Window:SetFontColor(Color)
+            assert(typeof(Color) == "Color3", "Color must be a Color3 value.")
+            Library.Scheme.FontColor = Color
+            Library:UpdateColorsUsingRegistry()
+        end
+    end
+
     -- Built-in GUI Settings. Created after the caller's tabs so it stays at the end.
     task.defer(function()
         if Library.Unloaded or Window.Destroyed or Library.Tabs["GUI Settings"] then
@@ -15078,27 +15096,116 @@ function Library:CreateWindow(WindowInfo)
 
         local AppearanceBox = SettingsTab:AddRightGroupbox("Appearance")
 
-        AppearanceBox:AddColorPicker("BackgroundColor", {
+        -- Color pickers are BaseAddons (Toggle/Button addons), not Groupbox methods.
+        -- Attach them to toggles so older/current Obsidian API versions do not throw
+        -- "attempt to call missing method AddColorPicker of table".
+        local BackgroundColorToggle = AppearanceBox:AddToggle("BackgroundColorControl", {
             Text = "GUI Background",
+            Default = true,
+        })
+        BackgroundColorToggle:AddColorPicker("BackgroundColor", {
             Default = Library.Scheme.BackgroundColor,
-            Callback = function(Color)
+            Transparency = true,
+            Callback = function(Color, Transparency)
                 Window:SetBackgroundColor(Color)
+                if Transparency ~= nil then
+                    Window:SetGuiTransparency(Transparency)
+                end
             end,
         })
 
-        AppearanceBox:AddColorPicker("OutlineColor", {
+        local OutlineColorToggle = AppearanceBox:AddToggle("OutlineColorControl", {
             Text = "GUI Outline",
+            Default = true,
+        })
+        OutlineColorToggle:AddColorPicker("OutlineColor", {
             Default = Library.Scheme.OutlineColor,
             Callback = function(Color)
                 Window:SetOutlineColor(Color)
             end,
         })
 
-        AppearanceBox:AddColorPicker("AccentColor", {
-            Text = "Accent",
+        local AccentColorToggle = AppearanceBox:AddToggle("AccentColorControl", {
+            Text = "Accent Color",
+            Default = true,
+        })
+        AccentColorToggle:AddColorPicker("AccentColor", {
             Default = Library.Scheme.AccentColor,
             Callback = function(Color)
                 Window:SetAccentColor(Color)
+            end,
+        })
+
+        AppearanceBox:AddDropdown("ThemePreset", {
+            Text = "Theme",
+            Values = {
+                "Black + Orange",
+                "Black + Purple",
+                "Black + Red",
+                "Black + Blue",
+                "Dark + Green",
+                "Light + Orange",
+            },
+            Default = 1,
+            Callback = function(Value)
+                local Themes = {
+                    ["Black + Orange"] = {
+                        Background = Color3.fromRGB(0, 0, 0),
+                        Main = Color3.fromRGB(5, 5, 5),
+                        Accent = Color3.fromRGB(255, 140, 0),
+                        Outline = Color3.fromRGB(255, 140, 0),
+                        Font = Color3.fromRGB(235, 238, 245),
+                    },
+                    ["Black + Purple"] = {
+                        Background = Color3.fromRGB(0, 0, 0),
+                        Main = Color3.fromRGB(5, 5, 5),
+                        Accent = Color3.fromRGB(150, 90, 255),
+                        Outline = Color3.fromRGB(150, 90, 255),
+                        Font = Color3.fromRGB(235, 238, 245),
+                    },
+                    ["Black + Red"] = {
+                        Background = Color3.fromRGB(0, 0, 0),
+                        Main = Color3.fromRGB(5, 5, 5),
+                        Accent = Color3.fromRGB(255, 70, 80),
+                        Outline = Color3.fromRGB(255, 70, 80),
+                        Font = Color3.fromRGB(235, 238, 245),
+                    },
+                    ["Black + Blue"] = {
+                        Background = Color3.fromRGB(0, 0, 0),
+                        Main = Color3.fromRGB(5, 5, 5),
+                        Accent = Color3.fromRGB(70, 150, 255),
+                        Outline = Color3.fromRGB(70, 150, 255),
+                        Font = Color3.fromRGB(235, 238, 245),
+                    },
+                    ["Dark + Green"] = {
+                        Background = Color3.fromRGB(10, 12, 10),
+                        Main = Color3.fromRGB(18, 22, 18),
+                        Accent = Color3.fromRGB(60, 210, 120),
+                        Outline = Color3.fromRGB(60, 210, 120),
+                        Font = Color3.fromRGB(235, 245, 238),
+                    },
+                    ["Light + Orange"] = {
+                        Background = Color3.fromRGB(235, 235, 235),
+                        Main = Color3.fromRGB(250, 250, 250),
+                        Accent = Color3.fromRGB(235, 120, 0),
+                        Outline = Color3.fromRGB(235, 120, 0),
+                        Font = Color3.fromRGB(25, 25, 25),
+                    },
+                }
+
+                local Theme = Themes[Value]
+                if Theme then
+                    Window:SetBackgroundColor(Theme.Background)
+                    Window:SetMainColor(Theme.Main)
+                    Window:SetAccentColor(Theme.Accent)
+                    Window:SetOutlineColor(Theme.Outline)
+                    if Window.SetFontColor then
+                        Window:SetFontColor(Theme.Font)
+                    else
+                        Library.Scheme.FontColor = Theme.Font
+                        Library:UpdateColorsUsingRegistry()
+                    end
+                end
             end,
         })
 
