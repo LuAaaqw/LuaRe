@@ -11287,13 +11287,15 @@ function Library:CreateWindow(WindowInfo)
     })
 
     local SidebarImageFrame = New("Frame", {
-        Name = "SidebarImageFrame",
+        Name = "LuaReSidebarImage",
         BackgroundTransparency = 1,
         BorderSizePixel = 0,
-        Position = UDim2.fromOffset(0, 48),
-        Size = UDim2.new(1, 0, 0, 90),
-        ZIndex = 50,
-        Parent = SidebarHost,
+        Position = UDim2.fromOffset(0, 0),
+        Size = UDim2.fromOffset(SavedDividerWidth, 90),
+        ZIndex = 200,
+        Active = false,
+        Selectable = false,
+        Parent = ScreenGui,
     })
 
     local SidebarImage = New("ImageLabel", {
@@ -11309,6 +11311,7 @@ function Library:CreateWindow(WindowInfo)
         Parent = SidebarImageFrame,
     })
 
+    SidebarImageFrame:SetAttribute("ImageHeight", 90)
     local GuiParts = { Window = MainFrame, Header = TopBar, Sidebar = SidebarHost, Content = Container }
     local SidebarGifFrames = nil
     local SidebarGifIndex = 0
@@ -11421,8 +11424,10 @@ function Library:CreateWindow(WindowInfo)
             return false
         end
         if Image == nil or Image == "" then
-            Object.Image = ""
-            Object.ImageTransparency = 1
+            Object.Image = "rbxassetid://11135326540"
+            Object.ImageTransparency = 0
+            StopSidebarGif()
+            UpdateSidebarImagePlacement()
             return true
         end
         StopSidebarGif()
@@ -11446,14 +11451,44 @@ function Library:CreateWindow(WindowInfo)
         return true
     end
 
+    local function UpdateSidebarImagePlacement()
+        if not SidebarImageFrame or not Tabs then
+            return
+        end
+
+        local Visible = Library.Toggled and Tabs.Visible and Tabs.AbsoluteSize.X > 0 and Tabs.AbsoluteSize.Y > 0
+        SidebarImageFrame.Visible = Visible
+        SidebarImageFrame.Active = false
+        SidebarImageFrame.Selectable = false
+        SidebarImageFrame.ZIndex = 200
+
+        if not Visible then
+            return
+        end
+
+        local TabPosition = Tabs.AbsolutePosition
+        local TabSize = Tabs.AbsoluteSize
+        local ImageHeight = SidebarImageFrame:GetAttribute("ImageHeight") or 90
+        ImageHeight = math.max(1, tonumber(ImageHeight) or 90)
+
+        SidebarImageFrame.Position = UDim2.fromOffset(
+            TabPosition.X,
+            TabPosition.Y - ImageHeight
+        )
+        SidebarImageFrame.Size = UDim2.fromOffset(
+            math.max(1, TabSize.X),
+            ImageHeight
+        )
+
+        SidebarImage.Position = UDim2.fromScale(0, 0)
+        SidebarImage.Size = UDim2.fromScale(1, 1)
+        SidebarImage.ZIndex = 201
+    end
+
     local function UpdateDetachedSidebar()
         local size = MainFrame.AbsoluteSize
         SidebarHost.Size = UDim2.fromOffset(SavedDividerWidth, math.max(120, size.Y))
-        SidebarImageFrame.Parent = SidebarHost
-        SidebarImageFrame.Position = UDim2.fromOffset(0, 48)
-        SidebarImageFrame.Size = UDim2.new(1, 0, 0, 90)
-        SidebarImageFrame.Visible = Library.Toggled
-        SidebarImageFrame.ZIndex = 50
+        UpdateSidebarImagePlacement()
         Tabs.Position = UDim2.fromOffset(0, 138)
         Tabs.Size = UDim2.new(1, 0, 1, -138)
         Tabs.AnchorPoint = Vector2.zero
@@ -11465,13 +11500,7 @@ function Library:CreateWindow(WindowInfo)
                 d.ZIndex = math.max(53, d.ZIndex)
             end
         end
-        SidebarImageFrame.Position = UDim2.fromOffset(0, 48)
-        SidebarImageFrame.Size = UDim2.new(1, 0, 0, 90)
-        SidebarImageFrame.Visible = Library.Toggled
-        SidebarImageFrame.ZIndex = 50
-        SidebarImage.Position = UDim2.fromScale(0, 0)
-        SidebarImage.Size = UDim2.fromScale(1, 1)
-        SidebarImage.ZIndex = 51
+        UpdateSidebarImagePlacement()
         SidebarHeader.ZIndex = 53
         SidebarHeaderFill.ZIndex = 53
         TitleHolder.Parent = SidebarHost
@@ -11570,11 +11599,8 @@ function Library:CreateWindow(WindowInfo)
                 DividerLine.Visible = true
             end
             SidebarHost.Visible = false
-            SidebarImageFrame.Parent = MainFrame
-            SidebarImageFrame.Position = UDim2.fromOffset(0, 49)
-            SidebarImageFrame.Size = UDim2.new(0, SavedDividerWidth, 0, 90)
-            SidebarImageFrame.Visible = Library.Toggled
-            SidebarImageFrame.ZIndex = 50
+            SidebarImageFrame.Parent = ScreenGui
+            UpdateSidebarImagePlacement()
             TitleHolder.Parent = TopBar
             TitleHolder.Position = UDim2.fromOffset(0, 0)
             TitleHolder.Size = UDim2.new(0, SavedDividerWidth, 1, 0)
@@ -11582,11 +11608,7 @@ function Library:CreateWindow(WindowInfo)
             WindowTitle.ZIndex = 55
 
             Tabs.AnchorPoint = Vector2.zero
-            SidebarImageFrame.Parent = MainFrame
-            SidebarImageFrame.Position = UDim2.fromOffset(0, 49)
-            SidebarImageFrame.Size = UDim2.new(0, SavedDividerWidth, 0, 90)
-            SidebarImageFrame.Visible = Library.Toggled
-            SidebarImageFrame.ZIndex = 50
+            SidebarImageFrame.Parent = ScreenGui
             Tabs.Parent = MainFrame
             Tabs.Position = UDim2.fromOffset(0, 139)
             Tabs.Size = UDim2.new(0, SavedDividerWidth, 1, -160)
@@ -11683,7 +11705,7 @@ function Library:CreateWindow(WindowInfo)
             SidebarHost.Size = UDim2.fromOffset(absSize.X, math.max(120, absSize.Y))
             SidebarHost.Visible = Library.Toggled
             SidebarHost.Active = Library.Toggled
-            SidebarImageFrame.Parent = SidebarHost
+            SidebarImageFrame.Parent = ScreenGui
             UpdateDetachedSidebar()
 
             MainFrame.Visible = Library.Toggled
@@ -11772,6 +11794,7 @@ function Library:CreateWindow(WindowInfo)
         end
         KeepDetachedSidebarOutsideMainFrame()
         UpdateTabPresentation()
+        UpdateSidebarImagePlacement()
         if GuiConnected and Tabs then
             Tabs.Visible = true
             Tabs.Active = Library.Toggled
@@ -11793,6 +11816,7 @@ function Library:CreateWindow(WindowInfo)
     end
 
     SetGuiConnected(true)
+    UpdateSidebarImagePlacement()
     WindowInfo.SidebarWidth = SavedDividerWidth
 
     Library.GuiParts = GuiParts
@@ -11891,8 +11915,9 @@ function Library:CreateWindow(WindowInfo)
     end
 
     function Window:SetSidebarImageSize(Height)
-        local Number = math.max(0, tonumber(Height) or 90)
-        SidebarImageFrame.Size = UDim2.new(1, 0, 0, Number)
+        local Number = math.max(1, tonumber(Height) or 90)
+        SidebarImageFrame:SetAttribute("ImageHeight", Number)
+        UpdateSidebarImagePlacement()
         return true
     end
 
