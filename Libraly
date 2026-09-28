@@ -11468,26 +11468,44 @@ function Library:CreateWindow(WindowInfo)
                 end
             end
 
-            -- Restore the last connected layout instead of forcing the original size.
-            -- This prevents the whole window/group from shrinking when reconnecting.
+            -- Reconnect only the internal layout. Never resize the outer GUI here.
+            -- The previous implementation restored a stale MainFrame/Container size,
+            -- which could make the whole content group visibly shrink after reconnecting.
             MainFrame.AnchorPoint = ConnectedMainAnchor
             MainFrame.Position = ConnectedMainPosition
-            MainFrame.Size = ConnectedMainSize
+            -- Intentionally do not assign MainFrame.Size here. Preserve the user's current size.
+
+            local CurrentWidth = MainFrame.AbsoluteSize.X
+            if CurrentWidth <= 0 then
+                CurrentWidth = MainFrame.Size.X.Offset
+            end
+            local SafeSidebarWidth = math.clamp(
+                SavedDividerWidth,
+                WindowInfo.MinSidebarWidth,
+                math.max(WindowInfo.MinSidebarWidth, CurrentWidth - WindowInfo.MinContainerWidth - 1)
+            )
+            SavedDividerWidth = SafeSidebarWidth
+            WindowInfo.SidebarWidth = SafeSidebarWidth
+
             if DividerLine then
-                DividerLine.Position = UDim2.fromOffset(SavedDividerWidth, 0)
+                DividerLine.Position = UDim2.fromOffset(SafeSidebarWidth, 0)
                 DividerLine.Visible = true
             end
             if DividerDrag then
-                DividerDrag.Position = UDim2.new(0, SavedDividerWidth - 5, 0, 0)
+                DividerDrag.Position = UDim2.new(0, SafeSidebarWidth - 5, 0, 0)
                 DividerDrag.Visible = true
                 DividerDrag.Active = true
             end
-            RightWrapper.Size = UDim2.new(1, -SavedDividerWidth - 57 - 1, 1, -16)
+
+            RightWrapper.Size = UDim2.new(1, -SafeSidebarWidth - 57 - 1, 1, -16)
             RightWrapper.Position = UDim2.new(1, -49, 0.5, 0)
-            Container.Position = OriginalContainerPosition
-            Container.Size = OriginalContainerSize
-            Container.AnchorPoint = Vector2.new(1, 0)
+
+            -- Recalculate Content from the current MainFrame size instead of using
+            -- a stale saved size. This keeps the content group from shrinking.
             Container.Parent = MainFrame
+            Container.AnchorPoint = Vector2.new(1, 0)
+            Container.Position = UDim2.new(1, 0, 0, 70)
+            Container.Size = UDim2.new(1, -SafeSidebarWidth - 1, 1, -70)
             Container.Visible = Library.Toggled
         else
             -- Keep the exact main-window layout so reconnecting never shrinks it.
@@ -11946,7 +11964,12 @@ function Library:CreateWindow(WindowInfo)
     end
 
     function Window:SetSidebarWidth(Width)
-        Width = math.clamp(tonumber(Width) or SavedDividerWidth, WindowInfo.MinSidebarWidth, MainFrame.Size.X.Offset - WindowInfo.MinContainerWidth - 1)
+        local OuterWidth = MainFrame.AbsoluteSize.X
+        if OuterWidth <= 0 then
+            OuterWidth = MainFrame.Size.X.Offset
+        end
+        local MaxWidth = math.max(WindowInfo.MinSidebarWidth, OuterWidth - WindowInfo.MinContainerWidth - 1)
+        Width = math.clamp(tonumber(Width) or SavedDividerWidth, WindowInfo.MinSidebarWidth, MaxWidth)
 
         SavedDividerWidth = Width
         WindowInfo.SidebarWidth = Width
