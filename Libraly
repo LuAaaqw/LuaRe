@@ -15078,12 +15078,13 @@ function Library:CreateWindow(WindowInfo)
     end))
 
 
-    -- LuaRe defaults: white GUI, 75%% transparency, white outline.
+    -- LuaRe defaults: black GUI, 75%% transparency, white outline.
+    -- Do not overwrite these defaults with the old white scheme.
     Window:SetGuiTransparency(WindowInfo.GuiTransparency or 0.75)
-    Library.Scheme.BackgroundColor = Color3.fromRGB(255, 255, 255)
-    Library.Scheme.MainColor = Color3.fromRGB(255, 255, 255)
+    Library.Scheme.BackgroundColor = Color3.fromRGB(15, 15, 15)
+    Library.Scheme.MainColor = Color3.fromRGB(20, 20, 20)
     Library.Scheme.OutlineColor = Color3.fromRGB(255, 255, 255)
-    Library.Scheme.FontColor = Color3.fromRGB(0, 0, 0)
+    Library.Scheme.FontColor = Color3.fromRGB(255, 255, 255)
     Library:UpdateColorsUsingRegistry()
 
     Window.MainFrame = MainFrame
