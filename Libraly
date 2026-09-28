@@ -11265,7 +11265,6 @@ function Library:CreateWindow(WindowInfo)
     local SidebarHeader = New("Frame", {
         Name = "SidebarHeader",
         BackgroundColor3 = "MainColor",
-        BackgroundTransparency = 0.12,
         BorderSizePixel = 0,
         Position = UDim2.fromOffset(0, 0),
         Size = UDim2.new(1, 0, 0, 48),
@@ -11287,25 +11286,28 @@ function Library:CreateWindow(WindowInfo)
         Parent = SidebarHeader,
     })
 
-    local SidebarImage = New("ImageLabel", {
-        Name = "SidebarBackgroundImage",
+    local SidebarImageFrame = New("Frame", {
+        Name = "SidebarImageFrame",
         BackgroundTransparency = 1,
-        Image = "rbxassetid://203321199",
-        ImageTransparency = 0.08,
-        ScaleType = Enum.ScaleType.Crop,
-        Position = UDim2.fromOffset(0, 0),
-        Size = UDim2.new(1, 0, 0, 110),
-        ZIndex = 51,
-        Active = false,
-        Selectable = false,
+        BorderSizePixel = 0,
+        Position = UDim2.fromOffset(0, 48),
+        Size = UDim2.new(1, 0, 0, 90),
+        ZIndex = 50,
         Parent = SidebarHost,
     })
 
-    local DefaultSidebarImage = "rbxassetid://203321199"
-    SidebarImage.Image = DefaultSidebarImage
-    SidebarImage.ImageTransparency = 0.08
-    SidebarImage.Active = false
-    SidebarImage.Selectable = false
+    local SidebarImage = New("ImageLabel", {
+        Name = "SidebarImage",
+        BackgroundTransparency = 1,
+        Image = "rbxassetid://203321199",
+        ImageTransparency = 0,
+        ScaleType = Enum.ScaleType.Crop,
+        Size = UDim2.fromScale(1, 1),
+        ZIndex = 50,
+        Active = false,
+        Selectable = false,
+        Parent = SidebarImageFrame,
+    })
 
     local GuiParts = { Window = MainFrame, Header = TopBar, Sidebar = SidebarHost, Content = Container }
     local GuiConnected = true
@@ -11355,8 +11357,13 @@ function Library:CreateWindow(WindowInfo)
     local function UpdateDetachedSidebar()
         local size = MainFrame.AbsoluteSize
         SidebarHost.Size = UDim2.fromOffset(SavedDividerWidth, math.max(120, size.Y))
-        Tabs.Position = UDim2.fromOffset(0, 110)
-        Tabs.Size = UDim2.new(1, 0, 1, -110)
+        SidebarImageFrame.Parent = SidebarHost
+        SidebarImageFrame.Position = UDim2.fromOffset(0, 48)
+        SidebarImageFrame.Size = UDim2.new(1, 0, 0, 90)
+        SidebarImageFrame.Visible = Library.Toggled
+        SidebarImageFrame.ZIndex = 50
+        Tabs.Position = UDim2.fromOffset(0, 138)
+        Tabs.Size = UDim2.new(1, 0, 1, -138)
         Tabs.AnchorPoint = Vector2.zero
         Tabs.Active = true
         Tabs.ZIndex = 52
@@ -11366,10 +11373,13 @@ function Library:CreateWindow(WindowInfo)
                 d.ZIndex = math.max(53, d.ZIndex)
             end
         end
-        SidebarImage.Position = UDim2.fromOffset(0, 0)
-        SidebarImage.Size = UDim2.new(1, 0, 0, 110)
+        SidebarImageFrame.Position = UDim2.fromOffset(0, 48)
+        SidebarImageFrame.Size = UDim2.new(1, 0, 0, 90)
+        SidebarImageFrame.Visible = Library.Toggled
+        SidebarImageFrame.ZIndex = 50
+        SidebarImage.Position = UDim2.fromScale(0, 0)
+        SidebarImage.Size = UDim2.fromScale(1, 1)
         SidebarImage.ZIndex = 51
-        SidebarImage.Visible = true
         SidebarHeader.ZIndex = 53
         SidebarHeaderFill.ZIndex = 53
         TitleHolder.Parent = SidebarHost
@@ -11468,16 +11478,26 @@ function Library:CreateWindow(WindowInfo)
                 DividerLine.Visible = true
             end
             SidebarHost.Visible = false
+            SidebarImageFrame.Parent = MainFrame
+            SidebarImageFrame.Position = UDim2.fromOffset(0, 49)
+            SidebarImageFrame.Size = UDim2.new(0, SavedDividerWidth, 0, 90)
+            SidebarImageFrame.Visible = Library.Toggled
+            SidebarImageFrame.ZIndex = 50
             TitleHolder.Parent = TopBar
             TitleHolder.Position = UDim2.fromOffset(0, 0)
             TitleHolder.Size = UDim2.new(0, SavedDividerWidth, 1, 0)
             WindowIcon.ZIndex = 55
             WindowTitle.ZIndex = 55
 
-            Tabs.Parent = MainFrame
             Tabs.AnchorPoint = Vector2.zero
-            Tabs.Position = OriginalSidebarPosition
-            Tabs.Size = UDim2.new(0, SavedDividerWidth, 1, -70)
+            SidebarImageFrame.Parent = MainFrame
+            SidebarImageFrame.Position = UDim2.fromOffset(0, 49)
+            SidebarImageFrame.Size = UDim2.new(0, SavedDividerWidth, 0, 90)
+            SidebarImageFrame.Visible = Library.Toggled
+            SidebarImageFrame.ZIndex = 50
+            Tabs.Parent = MainFrame
+            Tabs.Position = UDim2.fromOffset(0, 139)
+            Tabs.Size = UDim2.new(0, SavedDividerWidth, 1, -160)
             Tabs.Visible = true
             Tabs.Active = true
             -- Connected layout: keep the tab rail above Content.
@@ -11571,6 +11591,7 @@ function Library:CreateWindow(WindowInfo)
             SidebarHost.Size = UDim2.fromOffset(absSize.X, math.max(120, absSize.Y))
             SidebarHost.Visible = Library.Toggled
             SidebarHost.Active = Library.Toggled
+            SidebarImageFrame.Parent = SidebarHost
             UpdateDetachedSidebar()
 
             MainFrame.Visible = Library.Toggled
@@ -11745,6 +11766,10 @@ function Library:CreateWindow(WindowInfo)
         return SetPartImage(Part, Image)
     end
 
+    function Window:ClearGuiPartImage(Part)
+        return SetPartImage(Part, nil)
+    end
+
     function Window:SetSidebarImage(Image)
         return SetPartImage("Sidebar", Image)
     end
@@ -11753,25 +11778,16 @@ function Library:CreateWindow(WindowInfo)
         return SetPartImage("Sidebar", nil)
     end
 
-    function Window:SetSidebarImageTransparency(Transparency)
-        if not SidebarImage then
-            return false
-        end
-        SidebarImage.ImageTransparency = math.clamp(tonumber(Transparency) or 0, 0, 1)
+    function Window:SetSidebarImageTransparency(Value)
+        local Number = math.clamp(tonumber(Value) or 0, 0, 1)
+        SidebarImage.ImageTransparency = Number
         return true
     end
 
     function Window:SetSidebarImageSize(Height)
-        if not SidebarImage then
-            return false
-        end
-        local Value = math.max(0, tonumber(Height) or 110)
-        SidebarImage.Size = UDim2.new(1, 0, 0, Value)
+        local Number = math.max(0, tonumber(Height) or 90)
+        SidebarImageFrame.Size = UDim2.new(1, 0, 0, Number)
         return true
-    end
-
-    function Window:ClearGuiPartImage(Part)
-        return SetPartImage(Part, nil)
     end
 
     function Window:ConnectGui()
