@@ -344,6 +344,8 @@ local function BuildCurrentThemeData(): {[string]: any}
             ThemeData.LuaReSettings = {
                 ShowCustomCursor = Settings.ShowCustomCursor ~= false,
                 ToggleWindowAnimation = Settings.ToggleWindowAnimation == true,
+                DPIScale = tonumber(Settings.DPIScale) or 100,
+                SidebarImage = tostring(Settings.SidebarImage or "rbxassetid://7831350554"),
             }
         end
     end
@@ -700,21 +702,6 @@ function ThemeManager:ApplyThemeData(ThemeData: any): (boolean, string?)
         end
     end
 
-    -- Sync theme-backed GUI controls when a theme contains LuaReSettings.
-    local Settings = ThemeData.LuaReSettings
-    if typeof(Settings) == "table" and ThemeManager.Library.Window and ThemeManager.Library.Window.ApplyThemeSettings then
-        local Window = ThemeManager.Library.Window
-        pcall(function() Window:ApplyThemeSettings(Settings) end)
-        local OptionMap = {
-            LuaRe_CustomCursor = Settings.ShowCustomCursor,
-            LuaRe_ToggleAnimation = Settings.ToggleWindowAnimation,
-        }
-        for Flag, Value in OptionMap do
-            local Option = ThemeManager.Library.Options[Flag]
-            if Option and Value ~= nil then pcall(function() Option:SetValue(Value) end) end
-        end
-    end
-
     ThemeManager:ThemeUpdate()
     return true
 end
@@ -891,11 +878,42 @@ function ThemeManager:CreateThemeManager(Themesbox: any)
         Window:ApplyThemeSettings({
             ShowCustomCursor = CustomCursor.Value,
             ToggleWindowAnimation = ToggleAnimation.Value,
+            DPIScale = DPIScale and DPIScale.Value or CurrentSettings.DPIScale,
+            SidebarImage = SidebarImage and SidebarImage.Value or CurrentSettings.SidebarImage,
         })
     end
 
     CustomCursor:OnChanged(ApplyWindowOption)
     ToggleAnimation:OnChanged(ApplyWindowOption)
+
+    local DPIScale = Themesbox:AddSlider("LuaRe_DPIScale", {
+        Text = "DPI",
+        Default = math.round(((CurrentSettings.DPIScale or 100) * 1)),
+        Min = 50,
+        Max = 200,
+        Rounding = 0,
+    })
+
+    local SidebarImage = Themesbox:AddInput("LuaRe_SidebarImage", {
+        Text = "Image ID / URL",
+        Default = tostring(CurrentSettings.SidebarImage or "rbxassetid://7831350554"),
+        Finished = true,
+        ClearTextOnFocus = false,
+        ClearTextOnBlur = false,
+    })
+
+    local function ApplyExtraThemeOptions()
+        if not Window or not Window.ApplyThemeSettings then return end
+        Window:ApplyThemeSettings({
+            ShowCustomCursor = CustomCursor.Value,
+            ToggleWindowAnimation = ToggleAnimation.Value,
+            DPIScale = DPIScale.Value,
+            SidebarImage = SidebarImage.Value,
+        })
+    end
+
+    DPIScale:OnChanged(ApplyExtraThemeOptions)
+    SidebarImage:OnChanged(ApplyExtraThemeOptions)
 
     Themesbox:AddDivider()
 
