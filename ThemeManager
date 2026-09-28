@@ -59,7 +59,7 @@ local ThemeManager = {
     BuiltInThemes = {
         ["Default"] = {
             1,
-            { FontColor = "ffffff", MainColor = "191919", AccentColor = "7d55ff", BackgroundColor = "0f0f0f", OutlineColor = "282828", BackgroundImage = "" },
+            { FontColor = "ffffff", MainColor = "141414", AccentColor = "ff8c00", BackgroundColor = "0f0f0f", OutlineColor = "ffffff", BackgroundImage = "" },
         },
         ["BBot"] = {
             2,
@@ -873,19 +873,6 @@ function ThemeManager:CreateThemeManager(Themesbox: any)
         Default = CurrentSettings.ToggleWindowAnimation == true,
     })
 
-    local function ApplyWindowOption()
-        if not Window or not Window.ApplyThemeSettings then return end
-        Window:ApplyThemeSettings({
-            ShowCustomCursor = CustomCursor.Value,
-            ToggleWindowAnimation = ToggleAnimation.Value,
-            DPIScale = DPIScale and DPIScale.Value or CurrentSettings.DPIScale,
-            SidebarImage = SidebarImage and SidebarImage.Value or CurrentSettings.SidebarImage,
-        })
-    end
-
-    CustomCursor:OnChanged(ApplyWindowOption)
-    ToggleAnimation:OnChanged(ApplyWindowOption)
-
     local DPIScale = Themesbox:AddSlider("LuaRe_DPIScale", {
         Text = "DPI",
         Default = math.round(((CurrentSettings.DPIScale or 100) * 1)),
@@ -902,7 +889,7 @@ function ThemeManager:CreateThemeManager(Themesbox: any)
         ClearTextOnBlur = false,
     })
 
-    local function ApplyExtraThemeOptions()
+    local function ApplyWindowOption()
         if not Window or not Window.ApplyThemeSettings then return end
         Window:ApplyThemeSettings({
             ShowCustomCursor = CustomCursor.Value,
@@ -912,8 +899,10 @@ function ThemeManager:CreateThemeManager(Themesbox: any)
         })
     end
 
-    DPIScale:OnChanged(ApplyExtraThemeOptions)
-    SidebarImage:OnChanged(ApplyExtraThemeOptions)
+    CustomCursor:OnChanged(ApplyWindowOption)
+    ToggleAnimation:OnChanged(ApplyWindowOption)
+    DPIScale:OnChanged(ApplyWindowOption)
+    SidebarImage:OnChanged(ApplyWindowOption)
 
     Themesbox:AddDivider()
 
