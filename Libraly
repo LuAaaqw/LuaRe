@@ -11375,23 +11375,63 @@ function Library:CreateWindow(WindowInfo)
         for _, TabInfo in ipairs(Library.TabButtons) do
             local Label = TabInfo.Label
             local IconObject = TabInfo.Icon
+            local Button = TabInfo.Button
 
             if Label then
                 Label.Visible = not GuiConnected
-                Label.TextXAlignment = Enum.TextXAlignment.Left
                 Label.TextYAlignment = Enum.TextYAlignment.Center
-                Label.AnchorPoint = Vector2.new(0, 0.5)
-                Label.Position = UDim2.new(0.5, -16, 0.5, 0)
-                Label.Size = UDim2.new(0.5, 8, 1, 0)
+                Label.TextXAlignment = Enum.TextXAlignment.Center
+                Label.AnchorPoint = Vector2.new(0.5, 0.5)
+                Label.TextTruncate = Enum.TextTruncate.AtEnd
             end
 
             if IconObject then
                 IconObject.Visible = true
                 IconObject.AnchorPoint = Vector2.new(0.5, 0.5)
-                IconObject.Position = GuiConnected
-                    and UDim2.new(0.5, 0, 0.5, 0)
-                    or UDim2.new(0.5, -34, 0.5, 0)
                 IconObject.Size = UDim2.fromOffset(20, 20)
+
+                if GuiConnected then
+                    -- Connected mode: icon is completely independent from the text.
+                    IconObject.Position = UDim2.new(0.5, 0, 0.5, 0)
+                elseif Button and Label then
+                    -- Detached mode: center the icon+text group as one visual unit.
+                    -- The icon is moved farther left automatically when the text is long.
+                    local buttonWidth = math.max(Button.AbsoluteSize.X, 40)
+                    local padding = 10
+                    local gap = 8
+                    local iconSize = 20
+                    local textWidth = Library:GetTextBounds(
+                        tostring(Label.Text or ''),
+                        Library.Scheme.Font,
+                        Label.TextSize,
+                        nil
+                    )
+
+                    local maxTextWidth = math.max(12, buttonWidth - padding * 2 - iconSize - gap)
+                    textWidth = math.min(textWidth, maxTextWidth)
+
+                    local groupWidth = iconSize + gap + textWidth
+                    local groupLeft = math.max(padding, (buttonWidth - groupWidth) / 2)
+                    local iconCenterX = groupLeft + iconSize / 2
+                    local textCenterX = groupLeft + iconSize + gap + textWidth / 2
+
+                    IconObject.Position = UDim2.fromOffset(iconCenterX, Button.AbsoluteSize.Y / 2)
+                    Label.Position = UDim2.fromOffset(textCenterX, Button.AbsoluteSize.Y / 2)
+                    Label.Size = UDim2.fromOffset(textWidth, Button.AbsoluteSize.Y)
+                end
+            elseif Label and Button and not GuiConnected then
+                -- A text-only tab is still centered when detached.
+                local buttonWidth = math.max(Button.AbsoluteSize.X, 40)
+                local padding = 10
+                local textWidth = Library:GetTextBounds(
+                    tostring(Label.Text or ''),
+                    Library.Scheme.Font,
+                    Label.TextSize,
+                    nil
+                )
+                textWidth = math.min(textWidth, math.max(12, buttonWidth - padding * 2))
+                Label.Position = UDim2.fromOffset(buttonWidth / 2, Button.AbsoluteSize.Y / 2)
+                Label.Size = UDim2.fromOffset(textWidth, Button.AbsoluteSize.Y)
             end
         end
     end
@@ -11498,6 +11538,55 @@ function Library:CreateWindow(WindowInfo)
         DetachedSidebarPosition = Position
         return true
     end
+
+    local function KeepDetachedSidebarOutsideMainFrame()
+        if GuiConnected or not SidebarHost.Visible or not MainFrame.Visible then
+            return
+        end
+
+        local sidebarPos = SidebarHost.AbsolutePosition
+        local sidebarSize = SidebarHost.AbsoluteSize
+        local mainPos = MainFrame.AbsolutePosition
+        local mainSize = MainFrame.AbsoluteSize
+
+        if sidebarSize.X <= 0 or sidebarSize.Y <= 0 or mainSize.X <= 0 or mainSize.Y <= 0 then
+            return
+        end
+
+        local overlapX = sidebarPos.X < mainPos.X + mainSize.X and sidebarPos.X + sidebarSize.X > mainPos.X
+        local overlapY = sidebarPos.Y < mainPos.Y + mainSize.Y and sidebarPos.Y + sidebarSize.Y > mainPos.Y
+
+        if not (overlapX and overlapY) then
+            return
+        end
+
+        -- Never allow the detached tab panel to be placed on top of the main GUI.
+        local leftX = mainPos.X - sidebarSize.X - 4
+        local rightX = mainPos.X + mainSize.X + 4
+        local distanceLeft = math.abs(sidebarPos.X - leftX)
+        local distanceRight = math.abs(rightX - sidebarPos.X)
+        local targetX = distanceLeft <= distanceRight and leftX or rightX
+
+        local viewport = ScreenGui.AbsoluteSize
+        if targetX < 0 then
+            targetX = rightX
+        elseif viewport.X > 0 and targetX + sidebarSize.X > viewport.X then
+            targetX = leftX
+        end
+
+        SidebarHost.Position = UDim2.fromOffset(math.max(0, targetX), math.max(0, sidebarPos.Y))
+        DetachedSidebarPosition = SidebarHost.Position
+    end
+
+    Library:GiveSignal(RunService.RenderStepped:Connect(function()
+        if Library.Unloaded then
+            return
+        end
+        KeepDetachedSidebarOutsideMainFrame()
+        if not GuiConnected then
+            UpdateTabPresentation()
+        end
+    end))
 
     Library:MakeDraggable(SidebarHost, TitleHolder, false, true, WindowSnapConfig)
 
@@ -12047,16 +12136,14 @@ function Library:CreateWindow(WindowInfo)
 
             if TabLabel then
                 TabLabel.Visible = not GuiConnected
-                TabLabel.TextXAlignment = Enum.TextXAlignment.Left
+                TabLabel.TextXAlignment = Enum.TextXAlignment.Center
                 TabLabel.TextYAlignment = Enum.TextYAlignment.Center
-                TabLabel.AnchorPoint = Vector2.new(0, 0.5)
-                TabLabel.Position = UDim2.new(0.5, -16, 0.5, 0)
-                TabLabel.Size = UDim2.new(0.5, 8, 1, 0)
+                TabLabel.AnchorPoint = Vector2.new(0.5, 0.5)
+                TabLabel.TextTruncate = Enum.TextTruncate.AtEnd
             end
             if TabIcon then
                 TabIcon.Visible = true
                 TabIcon.AnchorPoint = Vector2.new(0.5, 0.5)
-                TabIcon.Position = GuiConnected and UDim2.new(0.5, 0, 0.5, 0) or UDim2.new(0.5, -34, 0.5, 0)
             end
 
 
@@ -13251,7 +13338,7 @@ function Library:CreateWindow(WindowInfo)
                     ImageTransparency = Library.ActiveTab == Tab and 0 or 0.5,
                     ScaleType = Enum.ScaleType.Fit,
                     AnchorPoint = Vector2.new(0.5, 0.5),
-                    Position = GuiConnected and UDim2.new(0.5, 0, 0.5, 0) or UDim2.new(0.5, -34, 0.5, 0),
+                    Position = UDim2.new(0.5, 0, 0.5, 0),
                     Size = UDim2.fromOffset(20, 20),
                     Visible = true,
                     Parent = ButtonHolder,
@@ -13284,7 +13371,7 @@ function Library:CreateWindow(WindowInfo)
             -- Connected: icon only. Detached: icon + independent text.
             TabIcon.Visible = true
             TabIcon.AnchorPoint = Vector2.new(0.5, 0.5)
-            TabIcon.Position = GuiConnected and UDim2.new(0.5, 0, 0.5, 0) or UDim2.new(0.5, -34, 0.5, 0)
+            UpdateTabPresentation()
         end
 
         function Tab:GetIcon()
@@ -13484,6 +13571,7 @@ function Library:CreateWindow(WindowInfo)
                 Label = TabLabel,
                 Padding = ButtonPadding,
                 Icon = TabIcon,
+                Button = TabButton,
             })
 
 
