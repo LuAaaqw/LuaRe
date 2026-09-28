@@ -11303,6 +11303,9 @@ function Library:CreateWindow(WindowInfo)
     local OriginalMainAnchor = MainFrame.AnchorPoint
     local OriginalMainPosition = MainFrame.Position
     local OriginalMainSize = MainFrame.Size
+    local ConnectedMainAnchor = MainFrame.AnchorPoint
+    local ConnectedMainPosition = MainFrame.Position
+    local ConnectedMainSize = MainFrame.Size
     local OriginalSidebarPosition = Tabs.Position
     local OriginalSidebarSize = Tabs.Size
     local OriginalContainerPosition = Container.Position
@@ -11397,8 +11400,8 @@ function Library:CreateWindow(WindowInfo)
                     -- Detached mode: center the icon+text group as one visual unit.
                     -- The icon is moved farther left automatically when the text is long.
                     local buttonWidth = math.max(Button.AbsoluteSize.X, 40)
-                    local padding = 10
-                    local gap = 8
+                    local padding = 6
+                    local gap = 4
                     local iconSize = 20
                     local textWidth = Library:GetTextBounds(
                         tostring(Label.Text or ''),
@@ -11465,9 +11468,11 @@ function Library:CreateWindow(WindowInfo)
                 end
             end
 
-            MainFrame.AnchorPoint = OriginalMainAnchor
-            MainFrame.Position = OriginalMainPosition
-            MainFrame.Size = OriginalMainSize
+            -- Restore the last connected layout instead of forcing the original size.
+            -- This prevents the whole window/group from shrinking when reconnecting.
+            MainFrame.AnchorPoint = ConnectedMainAnchor
+            MainFrame.Position = ConnectedMainPosition
+            MainFrame.Size = ConnectedMainSize
             if DividerLine then
                 DividerLine.Position = UDim2.fromOffset(SavedDividerWidth, 0)
                 DividerLine.Visible = true
@@ -11485,6 +11490,11 @@ function Library:CreateWindow(WindowInfo)
             Container.Parent = MainFrame
             Container.Visible = Library.Toggled
         else
+            -- Keep the exact main-window layout so reconnecting never shrinks it.
+            ConnectedMainAnchor = MainFrame.AnchorPoint
+            ConnectedMainPosition = MainFrame.Position
+            ConnectedMainSize = MainFrame.Size
+
             -- When the tab/sidebar is detached, the old divider must disappear
             -- instead of remaining fixed inside MainFrame.
             if DividerLine then
