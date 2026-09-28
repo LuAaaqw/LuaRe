@@ -11452,11 +11452,14 @@ function Library:CreateWindow(WindowInfo)
     end
 
     local function UpdateSidebarImagePlacement()
-        if not SidebarImageFrame or not Tabs then
+        if not SidebarImageFrame or not Tabs or not ScreenGui then
             return
         end
 
-        local Visible = Library.Toggled and Tabs.Visible and Tabs.AbsoluteSize.X > 0 and Tabs.AbsoluteSize.Y > 0
+        -- The image is a separate ScreenGui sibling of MainFrame.
+        -- It is visually above the tab rail, but it is NOT inside MainFrame,
+        -- SidebarHost, Tabs, or Content. It follows the tab/sidebar position.
+        local Visible = Library.Toggled and Tabs.Visible
         SidebarImageFrame.Visible = Visible
         SidebarImageFrame.Active = false
         SidebarImageFrame.Selectable = false
@@ -11466,19 +11469,36 @@ function Library:CreateWindow(WindowInfo)
             return
         end
 
-        local TabPosition = Tabs.AbsolutePosition
-        local TabSize = Tabs.AbsoluteSize
-        local ImageHeight = SidebarImageFrame:GetAttribute("ImageHeight") or 90
-        ImageHeight = math.max(1, tonumber(ImageHeight) or 90)
+        local ImageHeight = math.max(1, tonumber(SidebarImageFrame:GetAttribute("ImageHeight")) or 90)
+        local Gap = 6
+        local TargetPosition
+        local TargetWidth
+
+        if GuiConnected then
+            -- Connected: follow the left/tab rail of MainFrame.
+            local mainPos = MainFrame.AbsolutePosition
+            local width = Tabs.AbsoluteSize.X
+            if width <= 0 then
+                width = SavedDividerWidth
+            end
+            TargetPosition = Vector2.new(mainPos.X, mainPos.Y)
+            TargetWidth = math.max(1, width)
+        else
+            -- Detached: follow the detached SidebarHost.
+            local sidebarPos = SidebarHost.AbsolutePosition
+            local width = SidebarHost.AbsoluteSize.X
+            if width <= 0 then
+                width = SavedDividerWidth
+            end
+            TargetPosition = sidebarPos
+            TargetWidth = math.max(1, width)
+        end
 
         SidebarImageFrame.Position = UDim2.fromOffset(
-            TabPosition.X,
-            TabPosition.Y - ImageHeight
+            TargetPosition.X,
+            TargetPosition.Y - ImageHeight - Gap
         )
-        SidebarImageFrame.Size = UDim2.fromOffset(
-            math.max(1, TabSize.X),
-            ImageHeight
-        )
+        SidebarImageFrame.Size = UDim2.fromOffset(TargetWidth, ImageHeight)
 
         SidebarImage.Position = UDim2.fromScale(0, 0)
         SidebarImage.Size = UDim2.fromScale(1, 1)
@@ -11488,9 +11508,8 @@ function Library:CreateWindow(WindowInfo)
     local function UpdateDetachedSidebar()
         local size = MainFrame.AbsoluteSize
         SidebarHost.Size = UDim2.fromOffset(SavedDividerWidth, math.max(120, size.Y))
-        UpdateSidebarImagePlacement()
-        Tabs.Position = UDim2.fromOffset(0, 138)
-        Tabs.Size = UDim2.new(1, 0, 1, -138)
+        Tabs.Position = UDim2.fromOffset(0, 48)
+        Tabs.Size = UDim2.new(1, 0, 1, -48)
         Tabs.AnchorPoint = Vector2.zero
         Tabs.Active = true
         Tabs.ZIndex = 52
@@ -11610,8 +11629,8 @@ function Library:CreateWindow(WindowInfo)
             Tabs.AnchorPoint = Vector2.zero
             SidebarImageFrame.Parent = ScreenGui
             Tabs.Parent = MainFrame
-            Tabs.Position = UDim2.fromOffset(0, 139)
-            Tabs.Size = UDim2.new(0, SavedDividerWidth, 1, -160)
+            Tabs.Position = UDim2.fromOffset(0, 49)
+            Tabs.Size = UDim2.new(0, SavedDividerWidth, 1, -70)
             Tabs.Visible = true
             Tabs.Active = true
             -- Connected layout: keep the tab rail above Content.
@@ -11675,6 +11694,7 @@ function Library:CreateWindow(WindowInfo)
                 end
             end
             Container.Visible = Library.Toggled
+            UpdateSidebarImagePlacement()
         else
             -- Keep the exact main-window layout so reconnecting never shrinks it.
             ConnectedMainAnchor = MainFrame.AnchorPoint
