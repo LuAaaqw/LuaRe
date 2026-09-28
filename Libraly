@@ -11452,19 +11452,23 @@ function Library:CreateWindow(WindowInfo)
             TitleHolder.Parent = TopBar
             TitleHolder.Position = UDim2.fromOffset(0, 0)
             TitleHolder.Size = UDim2.new(0, SavedDividerWidth, 1, 0)
-            WindowIcon.ZIndex = 1
-            WindowTitle.ZIndex = 1
+            WindowIcon.ZIndex = 55
+            WindowTitle.ZIndex = 55
 
             Tabs.Parent = MainFrame
             Tabs.AnchorPoint = Vector2.zero
             Tabs.Position = OriginalSidebarPosition
             Tabs.Size = UDim2.new(0, SavedDividerWidth, 1, -70)
-            Tabs.ZIndex = 1
+            Tabs.Visible = true
             Tabs.Active = true
+            Tabs.ZIndex = 50
             for _, Descendant in Tabs:GetDescendants() do
                 if Descendant:IsA("GuiObject") then
                     Descendant.Visible = true
-                    Descendant.ZIndex = math.max(2, Descendant.ZIndex)
+                    Descendant.ZIndex = math.max(51, Descendant.ZIndex)
+                    if Descendant:IsA("GuiButton") then
+                        Descendant.Active = true
+                    end
                 end
             end
 
@@ -11506,6 +11510,12 @@ function Library:CreateWindow(WindowInfo)
             Container.AnchorPoint = Vector2.new(1, 0)
             Container.Position = UDim2.new(1, 0, 0, 70)
             Container.Size = UDim2.new(1, -SafeSidebarWidth - 1, 1, -70)
+            Container.ZIndex = 5
+            for _, Descendant in Container:GetDescendants() do
+                if Descendant:IsA("GuiObject") then
+                    Descendant.ZIndex = math.min(Descendant.ZIndex, 6)
+                end
+            end
             Container.Visible = Library.Toggled
         else
             -- Keep the exact main-window layout so reconnecting never shrinks it.
@@ -11556,6 +11566,18 @@ function Library:CreateWindow(WindowInfo)
         end
 
         UpdateTabPresentation()
+
+        if GuiConnected then
+            Tabs.Visible = true
+            Tabs.Active = true
+            Tabs.ZIndex = 50
+            for _, Descendant in Tabs:GetDescendants() do
+                if Descendant:IsA("GuiObject") then
+                    Descendant.Visible = true
+                    Descendant.ZIndex = math.max(51, Descendant.ZIndex)
+                end
+            end
+        end
     end
 
     local function SetGuiPartPosition(Name, Position)
@@ -11611,8 +11633,16 @@ function Library:CreateWindow(WindowInfo)
             return
         end
         KeepDetachedSidebarOutsideMainFrame()
-        if not GuiConnected then
-            UpdateTabPresentation()
+        UpdateTabPresentation()
+        if GuiConnected and Tabs then
+            Tabs.Visible = true
+            Tabs.Active = Library.Toggled
+            Tabs.ZIndex = 50
+            for _, Descendant in Tabs:GetDescendants() do
+                if Descendant:IsA("GuiObject") then
+                    Descendant.ZIndex = math.max(51, Descendant.ZIndex)
+                end
+            end
         end
     end))
 
@@ -12137,8 +12167,8 @@ function Library:CreateWindow(WindowInfo)
                     ImageColor3 = Icon.Custom and "WhiteColor" or "AccentColor",
                     ImageTransparency = 0.5,
                     ScaleType = Enum.ScaleType.Fit,
-                    AnchorPoint = Vector2.new(0, 0.5),
-                    Position = UDim2.new(0, 0, 0.5, 0),
+                    AnchorPoint = Vector2.new(0.5, 0.5),
+                    Position = UDim2.new(0.5, 0, 0.5, 0),
                     Size = UDim2.fromOffset(TabIconSize, TabIconSize),
                     Visible = true,
                     Parent = ButtonHolder,
