@@ -11487,7 +11487,7 @@ function Library:CreateWindow(WindowInfo)
         end
 
         local ImageHeight = math.max(1, tonumber(SidebarImageFrame:GetAttribute("ImageHeight")) or 220)
-        local Gap = 25
+        local Gap = 10
         local TargetPosition
         local TargetWidth
 
@@ -15078,8 +15078,9 @@ function Library:CreateWindow(WindowInfo)
     end))
 
 
-    -- LuaRe defaults: black GUI, 75%% transparency, white outline.
-    -- Do not overwrite these defaults with the old white scheme.
+    -- LuaRe defaults: black GUI, 75% transparency, white outline.
+    -- Keep these defaults in the Library itself; ThemeManager may override them
+    -- only when the user explicitly applies a saved/built-in theme.
     Window:SetGuiTransparency(WindowInfo.GuiTransparency or 0.75)
     Library.Scheme.BackgroundColor = Color3.fromRGB(15, 15, 15)
     Library.Scheme.MainColor = Color3.fromRGB(20, 20, 20)
