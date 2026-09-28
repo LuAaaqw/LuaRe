@@ -335,13 +335,16 @@ local function BuildCurrentThemeData(): {[string]: any}
         BackgroundImage = Library.Options.BackgroundImage.Value
     }
 
-    -- LuaRe window settings are part of the theme as well.
+    -- Only these LuaRe settings are theme-backed.
     if Library.Window and Library.Window.GetThemeSettings then
         local Success, Settings = pcall(function()
             return Library.Window:GetThemeSettings()
         end)
         if Success and typeof(Settings) == "table" then
-            ThemeData.LuaReSettings = Settings
+            ThemeData.LuaReSettings = {
+                ShowCustomCursor = Settings.ShowCustomCursor ~= false,
+                ToggleWindowAnimation = Settings.ToggleWindowAnimation == true,
+            }
         end
     end
 
@@ -703,28 +706,8 @@ function ThemeManager:ApplyThemeData(ThemeData: any): (boolean, string?)
         local Window = ThemeManager.Library.Window
         pcall(function() Window:ApplyThemeSettings(Settings) end)
         local OptionMap = {
-            LuaRe_Image = Settings.SidebarImage,
-            LuaRe_ImageHeight = Settings.SidebarImageHeight,
-            LuaRe_ImageTransparency = Settings.SidebarImageTransparency,
-            LuaRe_GuiTransparency = Settings.GuiTransparency,
-            LuaRe_DPI = Settings.DPIScale,
-            LuaRe_CornerRadius = Settings.CornerRadius,
-            LuaRe_SidebarWidth = Settings.SidebarWidth,
-            LuaRe_SnapDistance = Settings.SnapDistance,
-            LuaRe_SnapMargin = Settings.SnapMargin,
-            LuaRe_TabTransition = Settings.TabTransitionTime,
-            LuaRe_TabSwipeOffset = Settings.TabSwipeOffset,
-            LuaRe_Compact = Settings.SidebarCompacted,
-            LuaRe_AlwaysOnTop = Settings.AlwaysOnTop,
-            LuaRe_Snapping = Settings.Snapping,
-            LuaRe_SnapAvoidCoreGui = Settings.SnapAvoidCoreGui,
             LuaRe_CustomCursor = Settings.ShowCustomCursor,
-            LuaRe_UnlockMouse = Settings.UnlockMouseWhileOpen,
             LuaRe_ToggleAnimation = Settings.ToggleWindowAnimation,
-            LuaRe_TabAnimation = Settings.TabSwitchAnimation,
-            LuaRe_GroupboxAnimation = Settings.GroupboxAnimation,
-            LuaRe_DropdownAnimation = Settings.DropdownAnimation,
-            LuaRe_KeyPickerAnimation = Settings.KeyPickerAnimation,
         }
         for Flag, Value in OptionMap do
             local Option = ThemeManager.Library.Options[Flag]
@@ -885,7 +868,7 @@ function ThemeManager:CreateThemeManager(Themesbox: any)
         ClearTextOnBlur = false
     })
 
-    --// LuaRe window settings stored directly inside the theme JSON.
+    -- LuaRe theme-backed options: only window animation and custom cursor.
     local Window = ThemeManager.Library.Window
     local CurrentSettings = {}
     if Window and Window.GetThemeSettings then
@@ -893,79 +876,26 @@ function ThemeManager:CreateThemeManager(Themesbox: any)
         if Success and typeof(Value) == "table" then CurrentSettings = Value end
     end
 
-    local function AddSettingSlider(Flag, Text, Min, Max, Default, Rounding)
-        return Themesbox:AddSlider(Flag, {
-            Text = Text,
-            Default = Default,
-            Min = Min,
-            Max = Max,
-            Rounding = Rounding or 0,
-            Compact = true,
-        })
-    end
-
-    local ImageSource = Themesbox:AddInput("LuaRe_Image", {
-        Text = "Sidebar Image ID / URL",
-        Default = tostring(CurrentSettings.SidebarImage or "rbxassetid://7831350554"),
-        Finished = true,
-        ClearTextOnFocus = false,
-        ClearTextOnBlur = false,
+    local CustomCursor = Themesbox:AddToggle("LuaRe_CustomCursor", {
+        Text = "Custom cursor",
+        Default = CurrentSettings.ShowCustomCursor ~= false,
     })
 
-    local ImageHeight = AddSettingSlider("LuaRe_ImageHeight", "Image height", 80, 400, tonumber(CurrentSettings.SidebarImageHeight) or 220, 0)
-    local ImageTransparency = AddSettingSlider("LuaRe_ImageTransparency", "Image transparency", 0, 1, tonumber(CurrentSettings.SidebarImageTransparency) or 0, 2)
-    local GuiTransparency = AddSettingSlider("LuaRe_GuiTransparency", "GUI transparency", 0, 1, tonumber(CurrentSettings.GuiTransparency) or 0, 2)
-    local DPIScale = AddSettingSlider("LuaRe_DPI", "DPI", 50, 200, tonumber(CurrentSettings.DPIScale) or 100, 0)
-    local CornerRadius = AddSettingSlider("LuaRe_CornerRadius", "Corner radius", 0, 20, tonumber(CurrentSettings.CornerRadius) or 4, 0)
-    local SidebarWidth = AddSettingSlider("LuaRe_SidebarWidth", "Sidebar width", 144, 420, tonumber(CurrentSettings.SidebarWidth) or 250, 0)
-    local SnapDistance = AddSettingSlider("LuaRe_SnapDistance", "Snap distance", 0, 150, tonumber(CurrentSettings.SnapDistance) or 28, 0)
-    local SnapMargin = AddSettingSlider("LuaRe_SnapMargin", "Snap margin", 0, 50, tonumber(CurrentSettings.SnapMargin) or 8, 0)
-    local TabTransitionTime = AddSettingSlider("LuaRe_TabTransition", "Tab transition", 0, 1, tonumber(CurrentSettings.TabTransitionTime) or 0.22, 2)
-    local TabSwipeOffset = AddSettingSlider("LuaRe_TabSwipeOffset", "Tab swipe offset", 1, 80, tonumber(CurrentSettings.TabSwipeOffset) or 26, 0)
-
-    local Compact = Themesbox:AddToggle("LuaRe_Compact", { Text = "Compact sidebar", Default = CurrentSettings.SidebarCompacted == true })
-    local AlwaysOnTop = Themesbox:AddToggle("LuaRe_AlwaysOnTop", { Text = "Always on top", Default = CurrentSettings.AlwaysOnTop == true })
-    local Snapping = Themesbox:AddToggle("LuaRe_Snapping", { Text = "Snapping", Default = CurrentSettings.Snapping == true })
-    local SnapAvoidCoreGui = Themesbox:AddToggle("LuaRe_SnapAvoidCoreGui", { Text = "Avoid CoreGui while snapping", Default = CurrentSettings.SnapAvoidCoreGui ~= false })
-    local CustomCursor = Themesbox:AddToggle("LuaRe_CustomCursor", { Text = "Custom cursor", Default = CurrentSettings.ShowCustomCursor ~= false })
-    local UnlockMouse = Themesbox:AddToggle("LuaRe_UnlockMouse", { Text = "Unlock mouse while open", Default = CurrentSettings.UnlockMouseWhileOpen ~= false })
-    local ToggleAnimation = Themesbox:AddToggle("LuaRe_ToggleAnimation", { Text = "Window animation", Default = CurrentSettings.ToggleWindowAnimation == true })
-    local TabAnimation = Themesbox:AddToggle("LuaRe_TabAnimation", { Text = "Tab animation", Default = CurrentSettings.TabSwitchAnimation == true })
-    local GroupboxAnimation = Themesbox:AddToggle("LuaRe_GroupboxAnimation", { Text = "Groupbox animation", Default = CurrentSettings.GroupboxAnimation == true })
-    local DropdownAnimation = Themesbox:AddToggle("LuaRe_DropdownAnimation", { Text = "Dropdown animation", Default = CurrentSettings.DropdownAnimation == true })
-    local KeyPickerAnimation = Themesbox:AddToggle("LuaRe_KeyPickerAnimation", { Text = "KeyPicker animation", Default = CurrentSettings.KeyPickerAnimation == true })
+    local ToggleAnimation = Themesbox:AddToggle("LuaRe_ToggleAnimation", {
+        Text = "Window animation",
+        Default = CurrentSettings.ToggleWindowAnimation == true,
+    })
 
     local function ApplyWindowOption()
         if not Window or not Window.ApplyThemeSettings then return end
         Window:ApplyThemeSettings({
-            SidebarImage = ImageSource.Value,
-            SidebarImageHeight = ImageHeight.Value,
-            SidebarImageTransparency = ImageTransparency.Value,
-            GuiTransparency = GuiTransparency.Value,
-            DPIScale = DPIScale.Value,
-            CornerRadius = CornerRadius.Value,
-            SidebarWidth = SidebarWidth.Value,
-            SidebarCompacted = Compact.Value,
-            AlwaysOnTop = AlwaysOnTop.Value,
-            Snapping = Snapping.Value,
-            SnapDistance = SnapDistance.Value,
-            SnapMargin = SnapMargin.Value,
-            SnapAvoidCoreGui = SnapAvoidCoreGui.Value,
             ShowCustomCursor = CustomCursor.Value,
-            UnlockMouseWhileOpen = UnlockMouse.Value,
             ToggleWindowAnimation = ToggleAnimation.Value,
-            TabSwitchAnimation = TabAnimation.Value,
-            GroupboxAnimation = GroupboxAnimation.Value,
-            DropdownAnimation = DropdownAnimation.Value,
-            KeyPickerAnimation = KeyPickerAnimation.Value,
-            TabTransitionTime = TabTransitionTime.Value,
-            TabSwipeOffset = TabSwipeOffset.Value,
         })
     end
 
-    for _, Option in {ImageSource, ImageHeight, ImageTransparency, GuiTransparency, DPIScale, CornerRadius, SidebarWidth, SnapDistance, SnapMargin, TabTransitionTime, TabSwipeOffset, Compact, AlwaysOnTop, Snapping, SnapAvoidCoreGui, CustomCursor, UnlockMouse, ToggleAnimation, TabAnimation, GroupboxAnimation, DropdownAnimation, KeyPickerAnimation} do
-        Option:OnChanged(ApplyWindowOption)
-    end
+    CustomCursor:OnChanged(ApplyWindowOption)
+    ToggleAnimation:OnChanged(ApplyWindowOption)
 
     Themesbox:AddDivider()
 
