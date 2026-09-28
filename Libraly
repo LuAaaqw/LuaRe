@@ -11305,7 +11305,7 @@ function Library:CreateWindow(WindowInfo)
         BackgroundTransparency = 1,
         Image = WindowInfo.SidebarImage or "rbxassetid://7831350554",
         ImageTransparency = 0,
-        ScaleType = Enum.ScaleType.Crop,
+        ScaleType = Enum.ScaleType.Fit,
         Size = UDim2.fromScale(1, 1),
         ZIndex = 50,
         Active = false,
@@ -11472,7 +11472,7 @@ function Library:CreateWindow(WindowInfo)
         end
 
         local ImageHeight = math.max(1, tonumber(SidebarImageFrame:GetAttribute("ImageHeight")) or 90)
-        local Gap = 6
+        local Gap = 10
         local TargetPosition
         local TargetWidth
 
