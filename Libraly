@@ -10782,6 +10782,7 @@ function Library:CreateWindow(WindowInfo)
     local IsDefaultSearchbarSize = WindowInfo.SearchbarSize == UDim2.fromScale(1, 1)
     local MainFrame
     local DividerLine
+    local DividerDrag
     local TitleHolder
     local WindowTitle
     local WindowIcon
@@ -10856,6 +10857,19 @@ function Library:CreateWindow(WindowInfo)
             ZIndex = 2
         })
         DividerLine.Visible = true
+
+        DividerDrag = New("TextButton", {
+            Name = "DividerDrag",
+            BackgroundTransparency = 1,
+            BorderSizePixel = 0,
+            Text = "",
+            AutoButtonColor = false,
+            Active = true,
+            Position = UDim2.new(0, InitialLeftWidth - 5, 0, 0),
+            Size = UDim2.new(0, 11, 1, -21),
+            ZIndex = 20,
+            Parent = MainFrame,
+        })
 
         local BackgroundIcon = Library:GetCustomIcon(WindowInfo.BackgroundImage)
         HasBackgroundImage = BackgroundIcon ~= nil
@@ -11364,21 +11378,20 @@ function Library:CreateWindow(WindowInfo)
 
             if Label then
                 Label.Visible = not GuiConnected
-                Label.TextXAlignment = Enum.TextXAlignment.Center
+                Label.TextXAlignment = Enum.TextXAlignment.Left
                 Label.TextYAlignment = Enum.TextYAlignment.Center
-                Label.AnchorPoint = Vector2.new(0.5, 0.5)
-                Label.Position = UDim2.new(0.5, 0, 0.5, 0)
-                Label.Size = UDim2.new(1, -56, 1, 0)
+                Label.AnchorPoint = Vector2.new(0, 0.5)
+                Label.Position = UDim2.new(0.5, -16, 0.5, 0)
+                Label.Size = UDim2.new(0.5, 8, 1, 0)
             end
 
             if IconObject then
                 IconObject.Visible = true
                 IconObject.AnchorPoint = Vector2.new(0.5, 0.5)
-                if GuiConnected then
-                    IconObject.Position = UDim2.new(0.5, 0, 0.5, 0)
-                else
-                    IconObject.Position = UDim2.new(0.5, -34, 0.5, 0)
-                end
+                IconObject.Position = GuiConnected
+                    and UDim2.new(0.5, 0, 0.5, 0)
+                    or UDim2.new(0.5, -34, 0.5, 0)
+                IconObject.Size = UDim2.fromOffset(20, 20)
             end
         end
     end
@@ -11419,6 +11432,11 @@ function Library:CreateWindow(WindowInfo)
                 DividerLine.Position = UDim2.fromOffset(SavedDividerWidth, 0)
                 DividerLine.Visible = true
             end
+            if DividerDrag then
+                DividerDrag.Position = UDim2.new(0, SavedDividerWidth - 5, 0, 0)
+                DividerDrag.Visible = true
+                DividerDrag.Active = true
+            end
             RightWrapper.Size = UDim2.new(1, -SavedDividerWidth - 57 - 1, 1, -16)
             RightWrapper.Position = UDim2.new(1, -49, 0.5, 0)
             Container.Position = OriginalContainerPosition
@@ -11431,6 +11449,10 @@ function Library:CreateWindow(WindowInfo)
             -- instead of remaining fixed inside MainFrame.
             if DividerLine then
                 DividerLine.Visible = false
+            end
+            if DividerDrag then
+                DividerDrag.Visible = false
+                DividerDrag.Active = false
             end
             local absPos = SidebarHost.AbsolutePosition
             if absPos.X == 0 and absPos.Y == 0 then
@@ -11524,6 +11546,13 @@ function Library:CreateWindow(WindowInfo)
             DividerLine.Visible = GuiConnected
             if GuiConnected then
                 DividerLine.Position = UDim2.fromOffset(SavedDividerWidth, 0)
+            end
+        end
+        if DividerDrag then
+            DividerDrag.Visible = GuiConnected
+            DividerDrag.Active = GuiConnected
+            if GuiConnected then
+                DividerDrag.Position = UDim2.new(0, SavedDividerWidth - 5, 0, 0)
             end
         end
     end
@@ -11823,6 +11852,9 @@ function Library:CreateWindow(WindowInfo)
         SavedDividerWidth = Width
         WindowInfo.SidebarWidth = Width
         DividerLine.Position = UDim2.fromOffset(Width, 0)
+        if DividerDrag then
+            DividerDrag.Position = UDim2.new(0, Width - 5, 0, 0)
+        end
 
         TitleHolder.Size = UDim2.new(0, Width, 1, 0)
         RightWrapper.Size = UDim2.new(1, -Width - 57 - 1, 1, -16)
@@ -11835,6 +11867,39 @@ function Library:CreateWindow(WindowInfo)
         if not IsCompact then
             LastExpandedWidth = Width
         end
+    end
+
+    do
+        local Dragging = false
+        local StartX = 0
+        local StartWidth = SavedDividerWidth
+        local EndConnection
+
+        DividerDrag.InputBegan:Connect(function(Input)
+            if not IsClickInput(Input) or not GuiConnected then
+                return
+            end
+            Dragging = true
+            StartX = Input.Position.X
+            StartWidth = SavedDividerWidth
+            EndConnection = Input.Changed:Connect(function()
+                if Input.UserInputState == Enum.UserInputState.End then
+                    Dragging = false
+                    if EndConnection then
+                        EndConnection:Disconnect()
+                        EndConnection = nil
+                    end
+                end
+            end)
+        end)
+
+        UserInputService.InputChanged:Connect(function(Input)
+            if not Dragging or not GuiConnected or not IsHoverInput(Input) then
+                return
+            end
+            local Delta = Input.Position.X - StartX
+            Window:SetSidebarWidth(StartWidth + Delta)
+        end)
     end
 
     function Window:GetDividerPosition()
@@ -11982,11 +12047,11 @@ function Library:CreateWindow(WindowInfo)
 
             if TabLabel then
                 TabLabel.Visible = not GuiConnected
-                TabLabel.TextXAlignment = Enum.TextXAlignment.Center
+                TabLabel.TextXAlignment = Enum.TextXAlignment.Left
                 TabLabel.TextYAlignment = Enum.TextYAlignment.Center
-                TabLabel.AnchorPoint = Vector2.new(0.5, 0.5)
-                TabLabel.Position = UDim2.new(0.5, 0, 0.5, 0)
-                TabLabel.Size = UDim2.new(1, -56, 1, 0)
+                TabLabel.AnchorPoint = Vector2.new(0, 0.5)
+                TabLabel.Position = UDim2.new(0.5, -16, 0.5, 0)
+                TabLabel.Size = UDim2.new(0.5, 8, 1, 0)
             end
             if TabIcon then
                 TabIcon.Visible = true
