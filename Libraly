@@ -11299,7 +11299,7 @@ function Library:CreateWindow(WindowInfo)
     local SidebarImage = New("ImageLabel", {
         Name = "SidebarImage",
         BackgroundTransparency = 1,
-        Image = "rbxassetid://203321199",
+        Image = "rbxassetid://11135326540",
         ImageTransparency = 0,
         ScaleType = Enum.ScaleType.Crop,
         Size = UDim2.fromScale(1, 1),
@@ -11310,6 +11310,95 @@ function Library:CreateWindow(WindowInfo)
     })
 
     local GuiParts = { Window = MainFrame, Header = TopBar, Sidebar = SidebarHost, Content = Container }
+    local SidebarGifFrames = nil
+    local SidebarGifIndex = 0
+    local SidebarGifDelay = 0.1
+    local SidebarGifRunning = false
+    local SidebarGifToken = 0
+
+    local function NormalizeSidebarImage(Value)
+        if Value == nil or Value == "" then
+            return nil
+        end
+
+        local Text = tostring(Value)
+
+        if Text:match("^rbxassetid://%d+$") then
+            return Text
+        end
+
+        local AssetId = Text:match("[?&]id=(%d+)")
+            or Text:match("/library/(%d+)")
+            or Text:match("/catalog/(%d+)")
+            or Text:match("/asset/(%d+)")
+            or Text:match("^(%d+)$")
+
+        if AssetId then
+            return "rbxassetid://" .. AssetId
+        end
+
+        if Text:match("^https?://") then
+            return Text
+        end
+
+        return "rbxassetid://" .. Text
+    end
+
+    local function StopSidebarGif()
+        SidebarGifToken += 1
+        SidebarGifRunning = false
+        SidebarGifFrames = nil
+        SidebarGifIndex = 0
+    end
+
+    local function StartSidebarGif(Frames, Delay)
+        StopSidebarGif()
+
+        if type(Frames) ~= "table" or #Frames == 0 then
+            return false
+        end
+
+        local Normalized = {}
+        for _, Frame in ipairs(Frames) do
+            local Image = NormalizeSidebarImage(Frame)
+            if Image then
+                table.insert(Normalized, Image)
+            end
+        end
+
+        if #Normalized == 0 then
+            return false
+        end
+
+        SidebarGifFrames = Normalized
+        SidebarGifDelay = math.max(0.03, tonumber(Delay) or 0.1)
+        SidebarGifIndex = 1
+        SidebarGifRunning = true
+        local Token = SidebarGifToken
+
+        SidebarImage.Image = SidebarGifFrames[1]
+        SidebarImage.ImageTransparency = 0
+
+        task.spawn(function()
+            while SidebarGifRunning and Token == SidebarGifToken and SidebarImage and SidebarImage.Parent do
+                task.wait(SidebarGifDelay)
+
+                if not SidebarGifRunning or Token ~= SidebarGifToken then
+                    break
+                end
+
+                SidebarGifIndex += 1
+                if SidebarGifIndex > #SidebarGifFrames then
+                    SidebarGifIndex = 1
+                end
+
+                SidebarImage.Image = SidebarGifFrames[SidebarGifIndex]
+            end
+        end)
+
+        return true
+    end
+
     local GuiConnected = true
     local GuiPartCorners = { Sidebar = SidebarHostCorner }
     local GuiPartImages = { Sidebar = SidebarImage }
@@ -11336,9 +11425,12 @@ function Library:CreateWindow(WindowInfo)
             Object.ImageTransparency = 1
             return true
         end
-        local Value = tostring(Image)
-        if not Value:find("rbxassetid://", 1, true) and not Value:find("https://", 1, true) then
-            Value = "rbxassetid://" .. Value
+        StopSidebarGif()
+        local Value = NormalizeSidebarImage(Image)
+        if not Value then
+            Object.Image = ""
+            Object.ImageTransparency = 1
+            return true
         end
         Object.Image = Value
         Object.ImageTransparency = 0
@@ -11774,8 +11866,22 @@ function Library:CreateWindow(WindowInfo)
         return SetPartImage("Sidebar", Image)
     end
 
+    function Window:SetSidebarImageUrl(Url)
+        return SetPartImage("Sidebar", Url)
+    end
+
     function Window:ClearSidebarImage()
+        StopSidebarGif()
         return SetPartImage("Sidebar", nil)
+    end
+
+    function Window:SetSidebarGif(Frames, Delay)
+        return StartSidebarGif(Frames, Delay)
+    end
+
+    function Window:StopSidebarGif()
+        StopSidebarGif()
+        return true
     end
 
     function Window:SetSidebarImageTransparency(Value)
