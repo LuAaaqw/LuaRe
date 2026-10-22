@@ -1,46 +1,78 @@
 --[[
-    Lua-Re Player Hub | v1.3.2f
-    Purpose: player-focused Roblox utility UI using the Lua-Re UI library API.
-    No obfuscator method catalog is included. All actions are client-side/read-only
-    except local camera spectating and copying text to clipboard (if supported).
+    Lua-Re Player Hub + Full Embedded UI Library
+    Version: 1.3.2f
+
+    Includes the complete library implementation bundled from the source behind
+    the provided Lua-Re repository URL. The bundled library retains the upstream
+    MIT license notice below. No library-source download is required at runtime;
+    optional icon assets may still be fetched by the library.
+
+    Upstream library license:
+    MIT License
+    Copyright (c) 2025 deividcomsono
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+
+    Player utilities are client-side: player inspection, local character/session
+    diagnostics, camera spectating, and a configurable tab/component builder.
+    Up to 100 additional tabs can be created from the UI (20+ supported).
 ]]
 
 local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
+local LocalPlayer = Players.LocalPlayer or Players.PlayerAdded:Wait()
 local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
+local HttpService = game:GetService("HttpService")
 
--- Remove only previous instances of this UI and the known default test windows.
-local function getGuiRoots()
-    local roots = {}
-    pcall(function() table.insert(roots, game:GetService("CoreGui")) end)
-    if type(gethui) == "function" then
-        pcall(function()
-            local root = gethui()
-            if root then table.insert(roots, root) end
-        end)
-    end
-    return roots
+local Shared = _G
+if type(getgenv) == "function" then
+    local ok, env = pcall(getgenv)
+    if ok and type(env) == "table" then Shared = env end
 end
 
-for _, root in ipairs(getGuiRoots()) do
-    pcall(function()
+-- Stop a previous copy created by this script; don't touch unrelated GUIs.
+pcall(function()
+    local previous = Shared.__LuaReFullPlayerHub
+    if type(previous) == "table" then
+        if previous.Library and type(previous.Library.Unload) == "function" then
+            pcall(function() previous.Library:Unload() end)
+        elseif previous.Window and type(previous.Window.Unload) == "function" then
+            pcall(function() previous.Window:Unload() end)
+        end
+    end
+end)
+Shared.__LuaReFullPlayerHub = nil
+-- Also close older copies that did not publish our version marker.
+pcall(function()
+    local previousLibrary = Shared.Library
+    if type(previousLibrary) == "table" and type(previousLibrary.Unload) == "function" then
+        previousLibrary:Unload()
+    end
+end)
+pcall(function()
+    local roots = {game:GetService("CoreGui")}
+    if type(gethui) == "function" then
+        local ok, root = pcall(gethui)
+        if ok and root and root ~= roots[1] then table.insert(roots, root) end
+    end
+    for _, root in ipairs(roots) do
         for _, item in ipairs(root:GetDescendants()) do
-            if item:IsA("ScreenGui") and (
-                item.Name == "LuaRePlayerHub" or
-                item.Name == "Obsidian" or
-                item.Name == "ObsidianLoading" or
-                item.Name == "LuaReObsidianStartup"
-            ) then
-                item:Destroy()
+            if item:IsA("ScreenGui") and (item.Name == "Obsidian" or item.Name == "ObsidianLoading" or item.Name == "LuaRePlayerHub") then
+                pcall(function() item:Destroy() end)
             end
         end
-    end)
-end
+    end
+end)
 
--- Load the reusable UI library source embedded above this application layer.
--- The recovered Lua-Re library file returns a Library table from this wrapper.
 local Library = (function()
 local cloneref = (cloneref or clonereference or function(instance: any)
     return instance
@@ -319,15 +351,15 @@ local Library = {
     --// Scheme \\--
     IsLightTheme = false,
     Scheme = {
-        BackgroundColor = Color3.fromRGB(15, 15, 15),
-        MainColor = Color3.fromRGB(25, 25, 25),
-        AccentColor = Color3.fromRGB(125, 85, 255),
-        OutlineColor = Color3.fromRGB(40, 40, 40),
+        BackgroundColor = Color3.fromRGB(3, 8, 22),
+        MainColor = Color3.fromRGB(5, 14, 32),
+        AccentColor = Color3.fromRGB(100, 54, 255),
+        OutlineColor = Color3.fromRGB(15, 52, 107),
         FontColor = Color3.new(1, 1, 1),
-        Font = Font.fromEnum(Enum.Font.Code),
+        Font = Font.fromEnum(Enum.Font.Gotham),
 
-        RedColor = Color3.fromRGB(255, 50, 50),
-        DestructiveColor = Color3.fromRGB(220, 38, 38),
+        RedColor = Color3.fromRGB(255, 75, 105),
+        DestructiveColor = Color3.fromRGB(215, 42, 70),
         DarkColor = Color3.new(0, 0, 0),
         WhiteColor = Color3.new(1, 1, 1),
 
@@ -14906,36 +14938,50 @@ end
 
 getgenv().Library = Library
 return Library
+
 end)()
 
-assert(type(Library) == "table" and type(Library.CreateWindow) == "function", "Lua-Re UI library failed to initialize")
+assert(type(Library) == "table" and type(Library.CreateWindow) == "function", "Lua-Re library initialization failed: CreateWindow is unavailable.")
 
-local function rgb(r, g, b)
-    return Color3.fromRGB(r, g, b)
-end
+-- Lua-Re palette
+local Colors = {
+    Background = Color3.fromRGB(4, 9, 22),
+    Main = Color3.fromRGB(7, 15, 32),
+    Accent = Color3.fromRGB(111, 76, 255),
+    Outline = Color3.fromRGB(24, 70, 125),
+    Text = Color3.fromRGB(220, 230, 255),
+    Muted = Color3.fromRGB(147, 171, 218),
+    Red = Color3.fromRGB(251, 113, 133),
+    Green = Color3.fromRGB(35, 218, 150),
+}
 
-Library.Scheme.BackgroundColor = rgb(4, 9, 22)
-Library.Scheme.MainColor = rgb(7, 15, 32)
-Library.Scheme.AccentColor = rgb(111, 76, 255)
-Library.Scheme.OutlineColor = rgb(24, 70, 125)
-Library.Scheme.FontColor = rgb(220, 230, 255)
-Library.Scheme.DarkColor = rgb(5, 12, 27)
-Library.Scheme.RedColor = rgb(251, 113, 133)
-Library.Scheme.WhiteColor = rgb(255, 255, 255)
-Library.Scheme.Font = Font.fromEnum(Enum.Font.Gotham)
-Library.ToggleKeybind = Enum.KeyCode.RightControl
-Library.ShowCustomCursor = false
-Library.NotifyOnError = false
-Library.Animations.ToggleWindow = true
-Library.Animations.TabSwitch = true
-Library.Animations.Groupbox = true
-Library.Animations.Dropdown = true
-Library.Animations.KeyPicker = true
+pcall(function()
+    if type(Library.Scheme) == "table" then
+        Library.Scheme.BackgroundColor = Colors.Background
+        Library.Scheme.MainColor = Colors.Main
+        Library.Scheme.AccentColor = Colors.Accent
+        Library.Scheme.OutlineColor = Colors.Outline
+        Library.Scheme.FontColor = Colors.Text
+        Library.Scheme.DarkColor = Color3.fromRGB(5, 12, 27)
+        Library.Scheme.RedColor = Colors.Red
+        Library.Scheme.WhiteColor = Color3.new(1, 1, 1)
+        Library.Scheme.Font = Font.fromEnum(Enum.Font.Gotham)
+    end
+    Library.ShowCustomCursor = false
+    Library.NotifyOnError = false
+    Library.ToggleKeybind = Enum.KeyCode.RightControl
+    Library.CornerRadius = 10
+    Library.Animations.ToggleWindow = true
+    Library.Animations.TabSwitch = true
+    Library.Animations.Groupbox = true
+    Library.Animations.Dropdown = true
+    Library.Animations.KeyPicker = true
+end)
 
 local Window = Library:CreateWindow({
     Title = "Lua-Re | Player Hub",
-    Footer = "Player Utilities  •  RightControl to toggle",
-    Size = UDim2.fromOffset(940, 650),
+    Footer = "Player utilities + dynamic tabs  •  RightControl to toggle",
+    Size = UDim2.fromOffset(1120, 720),
     Center = true,
     AutoShow = true,
     Resizable = true,
@@ -14943,6 +14989,8 @@ local Window = Library:CreateWindow({
     ShowCustomCursor = false,
     ToggleKeybind = Enum.KeyCode.RightControl,
     Font = Enum.Font.Gotham,
+    NotifySide = "Right",
+    EnableCompacting = true,
     Animations = {
         ToggleWindow = true,
         TabSwitch = true,
@@ -14951,24 +14999,24 @@ local Window = Library:CreateWindow({
         KeyPicker = true,
     },
 })
+pcall(function() Window:SetCornerRadius(10) end)
 
-local Tabs = {
-    Players = Window:AddTab("Players", "users"),
-    Character = Window:AddTab("Character", "user-round"),
-    Session = Window:AddTab("Session", "activity"),
-    Settings = Window:AddTab("Settings", "settings"),
-}
-
+local Alive = true
 local function notify(title, description, duration)
-    pcall(function()
-        if Library.Notify then
-            Library:Notify({
-                Title = title or "Lua-Re Player Hub",
-                Description = description or "",
-                Time = duration or 4,
-            })
-        end
+    local ok = pcall(function()
+        Library:Notify({
+            Title = tostring(title or "Lua-Re"),
+            Description = tostring(description or ""),
+            Time = duration or 3,
+        })
     end)
+    if not ok then
+        pcall(function() Library:Notify(tostring(description or ""), duration or 3) end)
+    end
+end
+
+local function trim(value)
+    return tostring(value or ""):gsub("^%s+", ""):gsub("%s+$", "")
 end
 
 local function getHumanoid(player)
@@ -14983,306 +15031,439 @@ local function getRoot(player)
     return character:FindFirstChild("HumanoidRootPart") or character.PrimaryPart
 end
 
+local Tabs = {
+    Players = Window:AddTab("Players", "users"),
+    Character = Window:AddTab("Character", "user-round"),
+    Session = Window:AddTab("Session", "activity"),
+    TabManager = Window:AddTab("Tab Builder", "layout-grid"),
+    Settings = Window:AddTab("Settings", "settings"),
+    About = Window:AddTab("About", "info"),
+}
+
+-- PLAYER HUB -----------------------------------------------------------------
 local SelectedPlayer = nil
 local SpectatingPlayer = nil
 local OriginalCameraSubject = nil
 local AutoRefreshInfo = true
 local ShowDistance = true
-local UseDisplayNames = false
+local PreferDisplayName = false
 
-local PlayerPage = Tabs.Players:AddLeftGroupbox("PLAYER SELECTOR", "users")
-PlayerPage:AddLabel("Choose a player to inspect, spectate, or copy identifying details.", true)
-local PlayerDropdown = PlayerPage:AddDropdown("TargetPlayer", {
+local PlayerSelector = Tabs.Players:AddLeftGroupbox("PLAYER SELECTOR", "users")
+PlayerSelector:AddLabel("Select a player to inspect public session/character information.", true)
+local PlayerDropdown = PlayerSelector:AddDropdown("LuaRePlayerTarget", {
     Text = "Target player",
     SpecialType = "Player",
     ExcludeLocalPlayer = true,
     EnablePlayerImages = true,
     Callback = function(value)
-        SelectedPlayer = typeof(value) == "Instance" and value:IsA("Player") and value or nil
+        SelectedPlayer = (typeof(value) == "Instance" and value:IsA("Player")) and value or nil
     end,
 })
-PlayerPage:AddButton({
-    Text = "Refresh player list",
-    Func = function()
-        if PlayerDropdown and type(PlayerDropdown.SetValues) == "function" then
-            local list = Players:GetPlayers()
-            table.sort(list, function(a, b) return a.Name:lower() < b.Name:lower() end)
-            local filtered = {}
-            for _, player in ipairs(list) do
-                if player ~= LocalPlayer then table.insert(filtered, player) end
-            end
-            PlayerDropdown:SetValues(filtered)
-        end
-        notify("Players refreshed", tostring(#Players:GetPlayers()) .. " player(s) currently in the server.")
-    end,
-})
-PlayerPage:AddButton({
-    Text = "Inspect selected player",
-    Func = function()
-        if not SelectedPlayer or SelectedPlayer.Parent ~= Players then
-            notify("No player selected", "Select a player from the dropdown first.", 3)
-            return
-        end
-        local hum = getHumanoid(SelectedPlayer)
-        local root = getRoot(SelectedPlayer)
-        local health = hum and string.format("%.0f / %.0f", hum.Health, hum.MaxHealth) or "Character unavailable"
-        local position = root and tostring(root.Position) or "Unavailable"
-        notify("Player inspection", string.format("%s (@%s)\nUserId: %d\nHealth: %s\nPosition: %s", SelectedPlayer.DisplayName, SelectedPlayer.Name, SelectedPlayer.UserId, health, position), 7)
-    end,
-})
-PlayerPage:AddButton({
-    Text = "Copy username",
-    Func = function()
-        if not SelectedPlayer then
-            notify("No player selected", "Select a player first.", 3)
-            return
-        end
-        local copy = setclipboard or (syn and syn.write_clipboard)
-        if type(copy) == "function" then
-            local ok = pcall(copy, SelectedPlayer.Name)
-            notify(ok and "Username copied" or "Clipboard unavailable", ok and ("Copied @" .. SelectedPlayer.Name) or "Could not access clipboard.")
-        else
-            print("Lua-Re selected username:", SelectedPlayer.Name)
-            notify("Username", "Clipboard API unavailable. Username was printed to console: " .. SelectedPlayer.Name)
-        end
-    end,
-})
-PlayerPage:AddButton({
-    Text = "Copy UserId",
-    Func = function()
-        if not SelectedPlayer then
-            notify("No player selected", "Select a player first.", 3)
-            return
-        end
-        local id = tostring(SelectedPlayer.UserId)
-        local copy = setclipboard or (syn and syn.write_clipboard)
-        if type(copy) == "function" then
-            local ok = pcall(copy, id)
-            notify(ok and "UserId copied" or "Clipboard unavailable", ok and id or "Could not access clipboard.")
-        else
-            print("Lua-Re selected UserId:", id)
-            notify("UserId", "Clipboard API unavailable. UserId was printed to console: " .. id)
-        end
-    end,
-})
+
+local function refreshPlayerDropdown()
+    local values = {}
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then table.insert(values, player) end
+    end
+    table.sort(values, function(a, b) return a.Name:lower() < b.Name:lower() end)
+    if PlayerDropdown and type(PlayerDropdown.SetValues) == "function" then
+        PlayerDropdown:SetValues(values)
+    end
+    notify("Players", string.format("Found %d other player(s).", #values), 3)
+end
+
+PlayerSelector:AddButton({Text = "Refresh player list", Func = refreshPlayerDropdown})
+PlayerSelector:AddButton({Text = "Copy username", Func = function()
+    if not SelectedPlayer or SelectedPlayer.Parent ~= Players then
+        notify("No target", "Select a player first.", 3); return
+    end
+    local clipboard = setclipboard or (syn and syn.write_clipboard)
+    if type(clipboard) == "function" then
+        local ok = pcall(clipboard, SelectedPlayer.Name)
+        notify(ok and "Copied" or "Clipboard unavailable", "Username: " .. SelectedPlayer.Name, 3)
+    else
+        print("Lua-Re username:", SelectedPlayer.Name)
+        notify("Username", "Printed to console: " .. SelectedPlayer.Name, 3)
+    end
+end})
+PlayerSelector:AddButton({Text = "Copy UserId", Func = function()
+    if not SelectedPlayer or SelectedPlayer.Parent ~= Players then
+        notify("No target", "Select a player first.", 3); return
+    end
+    local value = tostring(SelectedPlayer.UserId)
+    local clipboard = setclipboard or (syn and syn.write_clipboard)
+    if type(clipboard) == "function" then pcall(clipboard, value) else print("Lua-Re UserId:", value) end
+    notify("UserId", value, 3)
+end})
 
 local PlayerDetails = Tabs.Players:AddRightGroupbox("PLAYER DETAILS", "contact")
-local SelectedNameLabel = PlayerDetails:AddLabel("Selected: —", true)
-local UsernameLabel = PlayerDetails:AddLabel("Username: —", true)
-local UserIdLabel = PlayerDetails:AddLabel("UserId: —", true)
-local AgeLabel = PlayerDetails:AddLabel("Account age: —", true)
-local TeamLabel = PlayerDetails:AddLabel("Team: —", true)
-local HealthLabel = PlayerDetails:AddLabel("Health: —", true)
-local DistanceLabel = PlayerDetails:AddLabel("Distance: —", true)
-local TargetStateLabel = PlayerDetails:AddLabel("Character: —", true)
-PlayerDetails:AddButton({
-    Text = "Spectate selected player",
-    Func = function()
-        if not SelectedPlayer or SelectedPlayer.Parent ~= Players then
-            notify("No player selected", "Select an online player first.", 3)
-            return
-        end
-        local humanoid = getHumanoid(SelectedPlayer)
-        if not humanoid then
-            notify("Character unavailable", "The selected player does not currently have a character.", 3)
-            return
-        end
-        local camera = Workspace.CurrentCamera
-        if not camera then
-            notify("Camera unavailable", "Could not access the current camera.", 3)
-            return
-        end
-        if not SpectatingPlayer then OriginalCameraSubject = camera.CameraSubject end
-        camera.CameraSubject = humanoid
-        SpectatingPlayer = SelectedPlayer
-        notify("Spectating", "Viewing " .. SelectedPlayer.DisplayName .. ". Use Stop spectating to return.")
-    end,
-})
-PlayerDetails:AddButton({
-    Text = "Stop spectating",
-    Func = function()
-        local camera = Workspace.CurrentCamera
-        local localHumanoid = getHumanoid(LocalPlayer)
-        if camera then camera.CameraSubject = localHumanoid or OriginalCameraSubject end
-        SpectatingPlayer = nil
-        OriginalCameraSubject = nil
-        notify("Camera restored", "Returned to your character.")
-    end,
-})
+local DetailLabels = {
+    Name = PlayerDetails:AddLabel("Selected: —", true),
+    Username = PlayerDetails:AddLabel("Username: —", true),
+    UserId = PlayerDetails:AddLabel("UserId: —", true),
+    Age = PlayerDetails:AddLabel("Account age: —", true),
+    Team = PlayerDetails:AddLabel("Team: —", true),
+    Health = PlayerDetails:AddLabel("Health: —", true),
+    Distance = PlayerDetails:AddLabel("Distance: —", true),
+    Character = PlayerDetails:AddLabel("Character: —", true),
+}
+local function stopSpectating()
+    local camera = Workspace.CurrentCamera
+    local ownHumanoid = getHumanoid(LocalPlayer)
+    if camera then camera.CameraSubject = ownHumanoid or OriginalCameraSubject end
+    SpectatingPlayer, OriginalCameraSubject = nil, nil
+    notify("Camera", "Stopped spectating.", 3)
+end
+PlayerDetails:AddButton({Text = "Spectate selected player", Func = function()
+    if not SelectedPlayer or SelectedPlayer.Parent ~= Players then
+        notify("No target", "Select an online player first.", 3); return
+    end
+    local humanoid = getHumanoid(SelectedPlayer)
+    local camera = Workspace.CurrentCamera
+    if not humanoid or not camera then
+        notify("Unavailable", "The target character or camera is unavailable.", 3); return
+    end
+    if not SpectatingPlayer then OriginalCameraSubject = camera.CameraSubject end
+    camera.CameraSubject = humanoid
+    SpectatingPlayer = SelectedPlayer
+    notify("Spectating", "Viewing " .. SelectedPlayer.DisplayName .. ".", 3)
+end})
+PlayerDetails:AddButton({Text = "Stop spectating", Func = stopSpectating})
 
 local CharacterLeft = Tabs.Character:AddLeftGroupbox("LOCAL CHARACTER", "user-round")
-CharacterLeft:AddLabel("These values describe your own local character.", true)
-local LocalNameLabel = CharacterLeft:AddLabel("Player: " .. LocalPlayer.Name, true)
-local LocalHealthLabel = CharacterLeft:AddLabel("Health: —", true)
-local WalkSpeedLabel = CharacterLeft:AddLabel("WalkSpeed: —", true)
-local JumpPowerLabel = CharacterLeft:AddLabel("JumpPower: —", true)
-local PositionLabel = CharacterLeft:AddLabel("Position: —", true)
-CharacterLeft:AddButton({
-    Text = "Refresh character info",
-    Func = function()
-        local hum = getHumanoid(LocalPlayer)
-        local root = getRoot(LocalPlayer)
-        LocalHealthLabel:SetText(hum and string.format("Health: %.0f / %.0f", hum.Health, hum.MaxHealth) or "Health: character unavailable")
-        WalkSpeedLabel:SetText(hum and ("WalkSpeed: " .. tostring(hum.WalkSpeed)) or "WalkSpeed: —")
-        JumpPowerLabel:SetText(hum and ("JumpPower: " .. tostring(hum.JumpPower)) or "JumpPower: —")
-        PositionLabel:SetText(root and ("Position: " .. tostring(root.Position)) or "Position: —")
-        notify("Character refreshed", "Updated local character information.", 3)
-    end,
-})
-CharacterLeft:AddButton({
-    Text = "Reset camera to my character",
-    Func = function()
-        local camera = Workspace.CurrentCamera
-        local hum = getHumanoid(LocalPlayer)
-        if camera and hum then
-            camera.CameraSubject = hum
-            SpectatingPlayer = nil
-            OriginalCameraSubject = nil
-            notify("Camera reset", "Camera now follows your character.", 3)
-        else
-            notify("Character unavailable", "Wait for your character to spawn.", 3)
-        end
-    end,
-})
-
-local CharacterRight = Tabs.Character:AddRightGroupbox("CHARACTER API", "activity")
-CharacterRight:AddLabel("Common player/character API calls used by this panel:", true)
-CharacterRight:AddLabel("Players.LocalPlayer", true)
-CharacterRight:AddLabel("Player.Character", true)
-CharacterRight:AddLabel("Character:FindFirstChildOfClass('Humanoid')", true)
+local CharacterLabels = {
+    Player = CharacterLeft:AddLabel("Player: " .. LocalPlayer.Name, true),
+    Health = CharacterLeft:AddLabel("Health: —", true),
+    WalkSpeed = CharacterLeft:AddLabel("WalkSpeed: —", true),
+    JumpPower = CharacterLeft:AddLabel("JumpPower: —", true),
+    Position = CharacterLeft:AddLabel("Position: —", true),
+}
+CharacterLeft:AddButton({Text = "Refresh character info", Func = function()
+    local hum, root = getHumanoid(LocalPlayer), getRoot(LocalPlayer)
+    CharacterLabels.Health:SetText(hum and string.format("Health: %.0f / %.0f", hum.Health, hum.MaxHealth) or "Health: character unavailable")
+    CharacterLabels.WalkSpeed:SetText(hum and ("WalkSpeed: " .. tostring(hum.WalkSpeed)) or "WalkSpeed: —")
+    CharacterLabels.JumpPower:SetText(hum and ("JumpPower: " .. tostring(hum.JumpPower)) or "JumpPower: —")
+    CharacterLabels.Position:SetText(root and ("Position: " .. tostring(root.Position)) or "Position: —")
+end})
+CharacterLeft:AddButton({Text = "Reset camera to my character", Func = function()
+    local camera, hum = Workspace.CurrentCamera, getHumanoid(LocalPlayer)
+    if camera and hum then camera.CameraSubject = hum; SpectatingPlayer = nil; OriginalCameraSubject = nil; notify("Camera", "Returned to your character.", 3)
+    else notify("Character unavailable", "Wait for your character to spawn.", 3) end
+end})
+local CharacterRight = Tabs.Character:AddRightGroupbox("AVAILABLE PLAYER API", "code")
+CharacterRight:AddLabel("Players:GetPlayers()", true)
+CharacterRight:AddLabel("Players.LocalPlayer / Player.Character", true)
 CharacterRight:AddLabel("Humanoid.Health / MaxHealth", true)
 CharacterRight:AddLabel("Humanoid.WalkSpeed / JumpPower", true)
-CharacterRight:AddLabel("Character.HumanoidRootPart.Position", true)
+CharacterRight:AddLabel("HumanoidRootPart.Position", true)
 CharacterRight:AddLabel("Workspace.CurrentCamera.CameraSubject", true)
-CharacterRight:AddLabel("This panel does not kick, damage, or change other players.", true)
+CharacterRight:AddLabel("This hub does not kick, damage, or remotely control other players.", true)
 
 local SessionLeft = Tabs.Session:AddLeftGroupbox("SESSION", "activity")
-local PlaceLabel = SessionLeft:AddLabel("PlaceId: " .. tostring(game.PlaceId), true)
-local JobLabel = SessionLeft:AddLabel("JobId: " .. (game.JobId ~= "" and game.JobId or "Studio / local session"), true)
-local PlayerCountLabel = SessionLeft:AddLabel("Players: —", true)
-local MaxPlayersLabel = SessionLeft:AddLabel("Max players: —", true)
-local LocalUserIdLabel = SessionLeft:AddLabel("Your UserId: " .. tostring(LocalPlayer.UserId), true)
-SessionLeft:AddButton({
-    Text = "Refresh session info",
-    Func = function()
-        PlayerCountLabel:SetText("Players: " .. tostring(#Players:GetPlayers()))
-        local success, maxPlayers = pcall(function() return Players.MaxPlayers end)
-        MaxPlayersLabel:SetText("Max players: " .. (success and tostring(maxPlayers) or "unavailable"))
-        notify("Session updated", "Session information refreshed.", 3)
-    end,
-})
+local SessionLabels = {
+    Place = SessionLeft:AddLabel("PlaceId: " .. tostring(game.PlaceId), true),
+    Job = SessionLeft:AddLabel("JobId: " .. (game.JobId ~= "" and game.JobId or "Studio / local session"), true),
+    Players = SessionLeft:AddLabel("Players: —", true),
+    MaxPlayers = SessionLeft:AddLabel("Max players: —", true),
+    UserId = SessionLeft:AddLabel("Your UserId: " .. tostring(LocalPlayer.UserId), true),
+}
+SessionLeft:AddButton({Text = "Refresh session info", Func = function()
+    SessionLabels.Players:SetText("Players: " .. tostring(#Players:GetPlayers()))
+    local ok, maxPlayers = pcall(function() return Players.MaxPlayers end)
+    SessionLabels.MaxPlayers:SetText("Max players: " .. (ok and tostring(maxPlayers) or "unavailable"))
+    notify("Session", "Session values refreshed.", 3)
+end})
+local SessionRight = Tabs.Session:AddRightGroupbox("CLIENT CONTEXT", "monitor")
+SessionRight:AddLabel("PlaceId and JobId are read from the current client session.", true)
+SessionRight:AddLabel("Player count refreshes without server-side actions.", true)
 
-local SettingsLeft = Tabs.Settings:AddLeftGroupbox("LIVE UPDATES", "settings")
-SettingsLeft:AddToggle("AutoRefreshInfo", {
-    Text = "Auto-refresh player details",
-    Default = true,
-    Tooltip = "Updates the selected player's visible information about once per second.",
-    Callback = function(value) AutoRefreshInfo = value == true end,
-})
-SettingsLeft:AddToggle("ShowDistance", {
-    Text = "Show distance to target",
-    Default = true,
-    Tooltip = "Shows the distance between your character and the selected character, when both are available.",
-    Callback = function(value) ShowDistance = value == true end,
-})
-SettingsLeft:AddToggle("UseDisplayNames", {
-    Text = "Prefer display names in labels",
-    Default = false,
-    Callback = function(value) UseDisplayNames = value == true end,
-})
-SettingsLeft:AddLabel("RightControl toggles the window. These settings are session-only.", true)
+-- DYNAMIC TAB BUILDER ---------------------------------------------------------
+local MAX_CUSTOM_TABS = 100
+local CustomTabs = {}
+local CustomTabNames = {}
+local SelectedCustomTab = nil
+local NextControlId = 0
+local NewTabName = "My Tab"
+local NewTabIcon = "layout-grid"
+local ComponentType = "Button"
+local ComponentName = "My control"
+local ComponentDefault = ""
+local ComponentOptions = "Option 1, Option 2, Option 3"
+local ComponentSide = "Left"
 
-local SettingsRight = Tabs.Settings:AddRightGroupbox("SAFETY / SCOPE", "shield-check")
-SettingsRight:AddLabel("Read-only player inspection", true)
-SettingsRight:AddLabel("Client-side camera spectating", true)
-SettingsRight:AddLabel("Optional clipboard for username / UserId", true)
-SettingsRight:AddLabel("No server calls, kicks, damage, or remote-event abuse are included.", true)
+local ManagerInfo = Tabs.TabManager:AddLeftGroupbox("CREATE TABS", "plus")
+ManagerInfo:AddLabel("Create custom pages while the UI is running. Supports up to 100 extra tabs per session (20+ works).", true)
+ManagerInfo:AddLabel("Every custom tab receives Left and Right panels; then add labels, buttons, toggles, sliders, inputs, dropdowns or dividers.", true)
+local TabNameInput = ManagerInfo:AddInput("LuaReNewTabName", {Text = "Tab name", Default = NewTabName, Placeholder = "e.g. Tools 21", Finished = true, Callback = function(value) NewTabName = trim(value) end})
+local TabIconInput = ManagerInfo:AddInput("LuaReNewTabIcon", {Text = "Icon name", Default = NewTabIcon, Placeholder = "layout-grid", Finished = true, Callback = function(value) NewTabIcon = trim(value) end})
+local CustomTabCountLabel = ManagerInfo:AddLabel("Custom tabs: 0 / " .. tostring(MAX_CUSTOM_TABS), true)
+local CreateTabButton
+local TabSelector
 
-local function updateSelectedPlayerDetails()
+local function tabNameExists(name)
+    local lower = name:lower()
+    for _, builtInName in ipairs({"Players", "Character", "Session", "Tab Builder", "Settings", "About"}) do
+        if builtInName:lower() == lower then return true end
+    end
+    for _, record in ipairs(CustomTabs) do
+        if record.Name:lower() == lower then return true end
+    end
+    return false
+end
+
+local function makeSafeTabName(raw)
+    local name = trim(raw):gsub("[%c]", "")
+    if name == "" then name = "Custom Tab" end
+    if #name > 32 then name = name:sub(1, 32) end
+    local baseName, suffix = name, 2
+    while tabNameExists(name) do
+        local tail = " " .. tostring(suffix)
+        name = baseName:sub(1, math.max(1, 32 - #tail)) .. tail
+        suffix += 1
+    end
+    return name
+end
+
+local function updateTabSelector()
+    if TabSelector and type(TabSelector.SetValues) == "function" then
+        pcall(function() TabSelector:SetValues(CustomTabNames) end)
+    end
+    CustomTabCountLabel:SetText("Custom tabs: " .. tostring(#CustomTabs) .. " / " .. tostring(MAX_CUSTOM_TABS))
+end
+
+local function createCustomTab(rawName, iconName)
+    if #CustomTabs >= MAX_CUSTOM_TABS then
+        notify("Tab limit reached", "Maximum is " .. tostring(MAX_CUSTOM_TABS) .. " custom tabs in this session.", 4)
+        return nil
+    end
+    local name = makeSafeTabName(rawName)
+    local icon = trim(iconName)
+    if icon == "" then icon = "layout-grid" end
+    if #icon > 40 then icon = "layout-grid" end
+    local tab = Window:AddTab(name, icon)
+    local left = tab:AddLeftGroupbox("" .. name .. "  •  LEFT", "layout-grid")
+    local right = tab:AddRightGroupbox("" .. name .. "  •  RIGHT", "sliders-horizontal")
+    left:AddLabel("Custom page: " .. name, true)
+    left:AddLabel("Use Tab Builder to add controls to this page.", true)
+    right:AddLabel("Custom component panel", true)
+    local record = {Name = name, Icon = icon, Tab = tab, Left = left, Right = right, Components = 0}
+    table.insert(CustomTabs, record)
+    table.insert(CustomTabNames, name)
+    SelectedCustomTab = record
+    updateTabSelector()
+    notify("Tab created", name .. " created successfully. Total custom tabs: " .. tostring(#CustomTabs), 3)
+    return record
+end
+
+CreateTabButton = ManagerInfo:AddButton({Text = "Create custom tab", Tooltip = "Creates a new tab with two group panels.", Func = function()
+    local record = createCustomTab(NewTabName, NewTabIcon)
+    if record then NewTabName = "My Tab" .. tostring(#CustomTabs + 1) end
+end})
+ManagerInfo:AddButton({Text = "Create 20 test tabs", Tooltip = "Creates 20 additional tabs to test long navigation lists.", Func = function()
+    local created = 0
+    for i = 1, 20 do
+        if #CustomTabs >= MAX_CUSTOM_TABS then break end
+        local record = createCustomTab(string.format("Workspace %02d", i), "layout-grid")
+        if record then created += 1 end
+    end
+    notify("Bulk tab creation", "Created " .. tostring(created) .. " tab(s).", 4)
+end})
+
+local ManagerControls = Tabs.TabManager:AddRightGroupbox("ADD COMPONENTS", "sliders-horizontal")
+TabSelector = ManagerControls:AddDropdown("LuaReCustomTabSelector", {Text = "Target custom tab", Values = {}, Default = nil, Multi = false, Callback = function(value)
+    for _, record in ipairs(CustomTabs) do
+        if record.Name == value then SelectedCustomTab = record; break end
+    end
+end})
+ManagerControls:AddDropdown("LuaReComponentType", {Text = "Component type", Values = {"Label", "Button", "Toggle", "Slider", "Input", "Dropdown", "Divider"}, Default = "Button", Callback = function(value) ComponentType = value end})
+ManagerControls:AddInput("LuaReComponentName", {Text = "Component text", Default = ComponentName, Placeholder = "Button label / control title", Finished = true, Callback = function(value) ComponentName = trim(value) end})
+ManagerControls:AddInput("LuaReComponentDefault", {Text = "Default / label value", Default = ComponentDefault, Placeholder = "Optional default value", Finished = true, Callback = function(value) ComponentDefault = tostring(value or "") end})
+ManagerControls:AddInput("LuaReComponentOptions", {Text = "Dropdown choices", Default = ComponentOptions, Placeholder = "Option 1, Option 2, Option 3", Finished = true, Callback = function(value) ComponentOptions = tostring(value or "") end})
+ManagerControls:AddDropdown("LuaReComponentSide", {Text = "Place component in", Values = {"Left", "Right"}, Default = "Left", Callback = function(value) ComponentSide = value end})
+
+local function parseOptions(text)
+    local list = {}
+    for item in tostring(text or ""):gmatch("[^,]+") do
+        item = trim(item)
+        if item ~= "" then table.insert(list, item) end
+        if #list >= 20 then break end
+    end
+    if #list == 0 then list = {"Option 1", "Option 2"} end
+    return list
+end
+
+local function addComponentToSelectedTab()
+    local record = SelectedCustomTab
+    if not record then
+        notify("Select a tab", "Create a custom tab, then choose it in Target custom tab.", 4)
+        return
+    end
+    local text = trim(ComponentName)
+    if text == "" then text = ComponentType end
+    local group = ComponentSide == "Right" and record.Right or record.Left
+    NextControlId += 1
+    local id = "LuaReCustom_" .. tostring(NextControlId)
+    local ok, err = pcall(function()
+        if ComponentType == "Label" then
+            group:AddLabel(text .. (ComponentDefault ~= "" and (": " .. ComponentDefault) or ""), true)
+        elseif ComponentType == "Divider" then
+            group:AddDivider()
+        elseif ComponentType == "Button" then
+            group:AddButton({Text = text, Tooltip = "User-created Lua-Re component", Func = function()
+                notify(record.Name, "Button activated: " .. text, 3)
+                print("[Lua-Re custom button]", record.Name, text)
+            end})
+        elseif ComponentType == "Toggle" then
+            group:AddToggle(id .. "Toggle", {Text = text, Default = ComponentDefault:lower() == "true", Callback = function(value)
+                print("[Lua-Re custom toggle]", record.Name, text, value)
+            end})
+        elseif ComponentType == "Slider" then
+            local default = tonumber(ComponentDefault) or 50
+            default = math.clamp(default, 0, 100)
+            group:AddSlider(id .. "Slider", {Text = text, Min = 0, Max = 100, Default = default, Rounding = 0, Callback = function(value)
+                print("[Lua-Re custom slider]", record.Name, text, value)
+            end})
+        elseif ComponentType == "Input" then
+            group:AddInput(id .. "Input", {Text = text, Default = ComponentDefault, Placeholder = "Enter value...", Finished = true, Callback = function(value)
+                print("[Lua-Re custom input]", record.Name, text, value)
+            end})
+        elseif ComponentType == "Dropdown" then
+            local choices = parseOptions(ComponentOptions)
+            group:AddDropdown(id .. "Dropdown", {Text = text, Values = choices, Default = choices[1], Multi = false, Callback = function(value)
+                print("[Lua-Re custom dropdown]", record.Name, text, value)
+            end})
+        else
+            error("Unsupported component type: " .. tostring(ComponentType))
+        end
+    end)
+    if ok then
+        record.Components += 1
+        notify("Component added", ComponentType .. " added to " .. record.Name .. ".", 3)
+    else
+        warn("Lua-Re component creation error: " .. tostring(err))
+        notify("Component error", tostring(err), 6)
+    end
+end
+ManagerControls:AddButton({Text = "Add component to selected tab", Func = addComponentToSelectedTab})
+ManagerControls:AddLabel("Toggles, sliders and inputs print their values to the executor console. Connect callbacks to your own project logic as needed.", true)
+
+-- SETTINGS -------------------------------------------------------------------
+local SettingsLeft = Tabs.Settings:AddLeftGroupbox("LIVE SETTINGS", "settings")
+SettingsLeft:AddToggle("LuaReAutoRefreshPlayers", {Text = "Auto-refresh player info", Default = true, Callback = function(value) AutoRefreshInfo = value == true end})
+SettingsLeft:AddToggle("LuaReShowDistance", {Text = "Show distance to target", Default = true, Callback = function(value) ShowDistance = value == true end})
+SettingsLeft:AddToggle("LuaRePreferDisplayName", {Text = "Use DisplayName in selected label", Default = false, Callback = function(value) PreferDisplayName = value == true end})
+SettingsLeft:AddLabel("RightControl shows/hides this window. Custom tabs exist for the current session only.", true)
+local SettingsRight = Tabs.Settings:AddRightGroupbox("LIMITS / BEHAVIOUR", "shield-check")
+SettingsRight:AddLabel("Maximum custom tabs: " .. tostring(MAX_CUSTOM_TABS), true)
+SettingsRight:AddLabel("All player details are read from client-visible Player/Character objects.", true)
+SettingsRight:AddLabel("Spectating only changes your local CurrentCamera.CameraSubject.", true)
+SettingsRight:AddLabel("No kick, damage, remote-event abuse, or server-side manipulation is included.", true)
+
+local AboutLeft = Tabs.About:AddLeftGroupbox("BUILD INFO", "info")
+AboutLeft:AddLabel("Lua-Re Player Hub | v1.3.2f", true)
+AboutLeft:AddLabel("Full embedded library source + player tools + dynamic tab/component builder.", true)
+AboutLeft:AddLabel("Dynamic tabs: up to 100 additional pages; the built-in library tab API is used directly.", true)
+AboutLeft:AddLabel("This is a UI/tooling base, not a game admin panel.", true)
+local AboutRight = Tabs.About:AddRightGroupbox("LIBRARY API", "code")
+AboutRight:AddLabel("Window:AddTab(name, icon)", true)
+AboutRight:AddLabel("Tab:AddLeftGroupbox / AddRightGroupbox", true)
+AboutRight:AddLabel("Groupbox:AddLabel / AddButton / AddToggle", true)
+AboutRight:AddLabel("Groupbox:AddSlider / AddInput / AddDropdown / AddDivider", true)
+AboutRight:AddButton({Text = "Print API summary", Func = function()
+    print("[Lua-Re] Full library API is embedded.")
+    print("[Lua-Re] Dynamic custom tabs:", #CustomTabs, "/", MAX_CUSTOM_TABS)
+    print("[Lua-Re] Supported builder component types: Label, Button, Toggle, Slider, Input, Dropdown, Divider")
+    notify("API summary", "Printed details to console.", 3)
+end})
+
+-- Details refresh -------------------------------------------------------------
+local function updateCharacterLabels()
+    local hum, root = getHumanoid(LocalPlayer), getRoot(LocalPlayer)
+    CharacterLabels.Health:SetText(hum and string.format("Health: %.0f / %.0f", hum.Health, hum.MaxHealth) or "Health: character unavailable")
+    CharacterLabels.WalkSpeed:SetText(hum and ("WalkSpeed: " .. tostring(hum.WalkSpeed)) or "WalkSpeed: —")
+    CharacterLabels.JumpPower:SetText(hum and ("JumpPower: " .. tostring(hum.JumpPower)) or "JumpPower: —")
+    CharacterLabels.Position:SetText(root and ("Position: " .. tostring(root.Position)) or "Position: —")
+end
+
+local function updatePlayerDetails()
     local player = SelectedPlayer
     if not player or player.Parent ~= Players then
-        SelectedNameLabel:SetText("Selected: —")
-        UsernameLabel:SetText("Username: —")
-        UserIdLabel:SetText("UserId: —")
-        AgeLabel:SetText("Account age: —")
-        TeamLabel:SetText("Team: —")
-        HealthLabel:SetText("Health: —")
-        DistanceLabel:SetText("Distance: —")
-        TargetStateLabel:SetText("Character: —")
+        DetailLabels.Name:SetText("Selected: —")
+        DetailLabels.Username:SetText("Username: —")
+        DetailLabels.UserId:SetText("UserId: —")
+        DetailLabels.Age:SetText("Account age: —")
+        DetailLabels.Team:SetText("Team: —")
+        DetailLabels.Health:SetText("Health: —")
+        DetailLabels.Distance:SetText("Distance: —")
+        DetailLabels.Character:SetText("Character: —")
         if player and player.Parent ~= Players then SelectedPlayer = nil end
         return
     end
-
-    local displayName = UseDisplayNames and player.DisplayName or player.Name
-    SelectedNameLabel:SetText("Selected: " .. displayName)
-    UsernameLabel:SetText("Username: @" .. player.Name)
-    UserIdLabel:SetText("UserId: " .. tostring(player.UserId))
-    AgeLabel:SetText("Account age: " .. tostring(player.AccountAge) .. " day(s)")
-    TeamLabel:SetText("Team: " .. (player.Team and player.Team.Name or "None"))
-
-    local hum = getHumanoid(player)
-    local root = getRoot(player)
-    HealthLabel:SetText(hum and string.format("Health: %.0f / %.0f", hum.Health, hum.MaxHealth) or "Health: character unavailable")
-    TargetStateLabel:SetText(player.Character and "Character: spawned" or "Character: not spawned")
-
-    if ShowDistance then
-        local localRoot = getRoot(LocalPlayer)
-        local distance = (root and localRoot) and math.floor((root.Position - localRoot.Position).Magnitude + 0.5) or nil
-        DistanceLabel:SetText(distance and ("Distance: " .. tostring(distance) .. " studs") or "Distance: unavailable")
+    DetailLabels.Name:SetText("Selected: " .. (PreferDisplayName and player.DisplayName or player.Name))
+    DetailLabels.Username:SetText("Username: @" .. player.Name)
+    DetailLabels.UserId:SetText("UserId: " .. tostring(player.UserId))
+    DetailLabels.Age:SetText("Account age: " .. tostring(player.AccountAge) .. " day(s)")
+    DetailLabels.Team:SetText("Team: " .. (player.Team and player.Team.Name or "None"))
+    local hum, root = getHumanoid(player), getRoot(player)
+    DetailLabels.Health:SetText(hum and string.format("Health: %.0f / %.0f", hum.Health, hum.MaxHealth) or "Health: character unavailable")
+    DetailLabels.Character:SetText(player.Character and "Character: spawned" or "Character: not spawned")
+    local localRoot = getRoot(LocalPlayer)
+    if ShowDistance and root and localRoot then
+        DetailLabels.Distance:SetText(string.format("Distance: %.1f studs", (root.Position - localRoot.Position).Magnitude))
     else
-        DistanceLabel:SetText("Distance: hidden")
-    end
-
-    if SpectatingPlayer == player and Workspace.CurrentCamera then
-        local specHumanoid = getHumanoid(player)
-        if specHumanoid and Workspace.CurrentCamera.CameraSubject ~= specHumanoid then
-            Workspace.CurrentCamera.CameraSubject = specHumanoid
-        end
+        DetailLabels.Distance:SetText("Distance: —")
     end
 end
 
-local function updateLocalCharacterDetails()
-    local hum = getHumanoid(LocalPlayer)
-    local root = getRoot(LocalPlayer)
-    LocalNameLabel:SetText("Player: " .. (UseDisplayNames and LocalPlayer.DisplayName or LocalPlayer.Name))
-    LocalHealthLabel:SetText(hum and string.format("Health: %.0f / %.0f", hum.Health, hum.MaxHealth) or "Health: character unavailable")
-    WalkSpeedLabel:SetText(hum and ("WalkSpeed: " .. tostring(hum.WalkSpeed)) or "WalkSpeed: —")
-    JumpPowerLabel:SetText(hum and ("JumpPower: " .. tostring(hum.JumpPower)) or "JumpPower: —")
-    PositionLabel:SetText(root and ("Position: " .. tostring(root.Position)) or "Position: —")
-    PlayerCountLabel:SetText("Players: " .. tostring(#Players:GetPlayers()))
-    local success, maxPlayers = pcall(function() return Players.MaxPlayers end)
-    MaxPlayersLabel:SetText("Max players: " .. (success and tostring(maxPlayers) or "unavailable"))
-
-    if SpectatingPlayer and SpectatingPlayer.Parent ~= Players then
-        local camera = Workspace.CurrentCamera
-        if camera then camera.CameraSubject = hum or OriginalCameraSubject end
-        SpectatingPlayer = nil
-        OriginalCameraSubject = nil
-        notify("Spectating stopped", "The selected player left the server.", 3)
-    end
+local function updateSession()
+    SessionLabels.Players:SetText("Players: " .. tostring(#Players:GetPlayers()))
+    local ok, maxPlayers = pcall(function() return Players.MaxPlayers end)
+    SessionLabels.MaxPlayers:SetText("Max players: " .. (ok and tostring(maxPlayers) or "unavailable"))
 end
 
-local Alive = true
-if type(Library.OnUnload) == "function" then
-    Library:OnUnload(function()
-        Alive = false
-        local camera = Workspace.CurrentCamera
-        local localHumanoid = getHumanoid(LocalPlayer)
-        if camera and (SpectatingPlayer ~= nil) then
-            camera.CameraSubject = localHumanoid or OriginalCameraSubject
-        end
-        SpectatingPlayer = nil
-        OriginalCameraSubject = nil
-    end)
-end
+-- Initial data and dropdown.
+refreshPlayerDropdown()
+updatePlayerDetails()
+updateCharacterLabels()
+updateSession()
 
+local loopToken = 0
+loopToken += 1
+local myToken = loopToken
 task.spawn(function()
-    while Alive and not Library.Unloaded do
-        if AutoRefreshInfo then updateSelectedPlayerDetails() end
-        updateLocalCharacterDetails()
+    while Alive and myToken == loopToken and not Library.Unloaded do
+        if AutoRefreshInfo then updatePlayerDetails() end
+        updateCharacterLabels()
+        updateSession()
         task.wait(1)
     end
 end)
 
-notify("Lua-Re Player Hub", "Loaded player-focused tools. Select a player on the Players tab.", 5)
+Players.PlayerAdded:Connect(function() task.defer(refreshPlayerDropdown) end)
+Players.PlayerRemoving:Connect(function(player)
+    if player == SelectedPlayer then SelectedPlayer = nil end
+    task.defer(refreshPlayerDropdown)
+end)
 
+if type(Library.OnUnload) == "function" then
+    pcall(function()
+        Library:OnUnload(function()
+            Alive = false
+            if SpectatingPlayer then
+                local camera = Workspace.CurrentCamera
+                if camera then camera.CameraSubject = getHumanoid(LocalPlayer) or OriginalCameraSubject end
+            end
+            Shared.__LuaReFullPlayerHub = nil
+        end)
+    end)
+end
+
+Shared.__LuaReFullPlayerHub = {
+    Library = Library,
+    Window = Window,
+    Tabs = Tabs,
+    CustomTabs = CustomTabs,
+    GetCustomTabCount = function() return #CustomTabs end,
+    MaxCustomTabs = MAX_CUSTOM_TABS,
+}
+notify("Lua-Re Player Hub", "Ready. Use Tab Builder to create 20+ custom tabs and add controls.", 5)
