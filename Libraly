@@ -1,20 +1,85 @@
 -- ============================================================================
--- Lua-Re Obsidian full themed application UI | v1.3.2f
--- This file embeds the complete Obsidian library and retains its original API.
--- The Lua-Re controls below are a UI/configuration prototype, not an obfuscator.
+-- Lua-Re Obsidian full themed application UI | v1.3.2f | FORCE RELOAD BUILD
+-- Complete Obsidian source is embedded below. Original API methods are retained.
+-- If startup fails, this build displays the exact runtime error instead of leaving
+-- the old Basic Controls window on screen.
 -- ============================================================================
 
 local Shared = _G
 if type(getgenv) == "function" then
     local ok, env = pcall(getgenv)
-    if ok and type(env) == "table" then
-        Shared = env
-    end
+    if ok and type(env) == "table" then Shared = env end
 end
 
--- IMPORTANT: always replace an older Lua-Re/Obsidian instance when this file is re-executed.
--- The previous guard only toggled the old window and returned, which made updated UI files
--- appear to do nothing. Clean up both this build's state and a standalone Obsidian test window.
+local __LuaReStartupGui, __LuaReStartupLabel
+local function __LuaReGetGuiRoot()
+    if type(gethui) == "function" then
+        local ok, root = pcall(gethui)
+        if ok and root then return root end
+    end
+    return game:GetService("CoreGui")
+end
+pcall(function()
+    local root = __LuaReGetGuiRoot()
+    local oldStatus = root:FindFirstChild("LuaReObsidianStartup")
+    if oldStatus then oldStatus:Destroy() end
+    __LuaReStartupGui = Instance.new("ScreenGui")
+    __LuaReStartupGui.Name = "LuaReObsidianStartup"
+    __LuaReStartupGui.ResetOnSpawn = false
+    __LuaReStartupGui.DisplayOrder = 1000000
+    __LuaReStartupGui.Parent = root
+    local frame = Instance.new("Frame")
+    frame.Name = "Status"
+    frame.AnchorPoint = Vector2.new(0.5, 0.5)
+    frame.Position = UDim2.fromScale(0.5, 0.5)
+    frame.Size = UDim2.fromOffset(460, 120)
+    frame.BackgroundColor3 = Color3.fromRGB(5, 14, 32)
+    frame.BorderSizePixel = 0
+    frame.Parent = __LuaReStartupGui
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 10)
+    corner.Parent = frame
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(100, 54, 255)
+    stroke.Thickness = 1.5
+    stroke.Parent = frame
+    __LuaReStartupLabel = Instance.new("TextLabel")
+    __LuaReStartupLabel.Name = "Message"
+    __LuaReStartupLabel.BackgroundTransparency = 1
+    __LuaReStartupLabel.Position = UDim2.fromOffset(16, 10)
+    __LuaReStartupLabel.Size = UDim2.new(1, -32, 1, -20)
+    __LuaReStartupLabel.Font = Enum.Font.Gotham
+    __LuaReStartupLabel.TextSize = 14
+    __LuaReStartupLabel.TextColor3 = Color3.fromRGB(226, 234, 255)
+    __LuaReStartupLabel.TextWrapped = true
+    __LuaReStartupLabel.Text = "Lua-Re update is starting...\nRemoving the old Obsidian window."
+    __LuaReStartupLabel.Parent = frame
+end)
+
+local function __LuaReBuild()
+-- Force-destroy the old Obsidian window by ScreenGui name as a fallback to Library:Unload().
+-- This handles executors where the previous script's global Library reference is not shared.
+pcall(function()
+    local roots = {}
+    local core = game:GetService("CoreGui")
+    table.insert(roots, core)
+    if type(gethui) == "function" then
+        local ok, hui = pcall(gethui)
+        if ok and hui and hui ~= core then table.insert(roots, hui) end
+    end
+    for _, root in ipairs(roots) do
+        local descendants = root:GetDescendants()
+        for _, item in ipairs(descendants) do
+            if item:IsA("ScreenGui") and (item.Name == "Obsidian" or item.Name == "ObsidianLoading") then
+                pcall(function() item:Destroy() end)
+            end
+        end
+        if root:IsA("ScreenGui") and (root.Name == "Obsidian" or root.Name == "ObsidianLoading") then
+            pcall(function() root:Destroy() end)
+        end
+    end
+end)
+
 local PreviousBuild = Shared.__LuaReObsidianFullRunning
 if type(PreviousBuild) == "table" then
     if PreviousBuild.Library and type(PreviousBuild.Library.Unload) == "function" then
@@ -15470,3 +15535,25 @@ Shared.__LuaReObsidianMethodProfile = UIState
 refreshSummary()
 notify("Lua-Re", "Full Obsidian library and Lua-Re method UI loaded.", 4)
 print("[Lua-Re] UI loaded. Original Obsidian library is embedded; method switches currently store profile state only.")
+
+end -- __LuaReBuild
+
+local __buildOK, __buildError = xpcall(__LuaReBuild, function(err)
+    return tostring(err)
+end)
+if __buildOK then
+    pcall(function()
+        if __LuaReStartupGui then __LuaReStartupGui:Destroy() end
+    end)
+else
+    local message = "Lua-Re failed to load the new GUI.\n\n" .. tostring(__buildError)
+    warn("[Lua-Re startup error] " .. tostring(__buildError))
+    pcall(function()
+        if __LuaReStartupGui and __LuaReStartupGui.Parent then
+            if __LuaReStartupLabel then
+                __LuaReStartupLabel.Text = message:sub(1, 1500)
+                __LuaReStartupLabel.TextColor3 = Color3.fromRGB(255, 135, 150)
+            end
+        end
+    end)
+end
