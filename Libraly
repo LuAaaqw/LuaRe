@@ -1,3 +1,8 @@
+-- ============================================================================
+-- Lua-Re Obsidian full themed application UI | v1.3.2f
+-- This file embeds the complete Obsidian library and retains its original API.
+-- The Lua-Re controls below are a UI/configuration prototype, not an obfuscator.
+-- ============================================================================
 
 local Shared = _G
 if type(getgenv) == "function" then
@@ -7,8 +12,8 @@ if type(getgenv) == "function" then
     end
 end
 
-if type(Shared.__LuaReUIBuilderRunning) == "table" then
-    local previous = Shared.__LuaReUIBuilderRunning
+if type(Shared.__LuaReObsidianFullRunning) == "table" then
+    local previous = Shared.__LuaReObsidianFullRunning
     if previous.Library and not previous.Library.Unloaded then
         if previous.Window and type(previous.Window.Toggle) == "function" then
             pcall(function() previous.Window:Toggle(true) end)
@@ -17,11 +22,6 @@ if type(Shared.__LuaReUIBuilderRunning) == "table" then
     end
 end
 
-
--- ======================================================================
--- BEGIN COMPLETE UPSTREAM OBSIDIAN Library.lua (all API/mechanics embedded)
--- Wrapped in a factory because upstream ends with: return Library
--- ======================================================================
 local Library = (function()
 local cloneref = (cloneref or clonereference or function(instance: any)
     return instance
@@ -300,15 +300,15 @@ local Library = {
     --// Scheme \\--
     IsLightTheme = false,
     Scheme = {
-        BackgroundColor = Color3.fromRGB(15, 15, 15),
-        MainColor = Color3.fromRGB(25, 25, 25),
-        AccentColor = Color3.fromRGB(125, 85, 255),
-        OutlineColor = Color3.fromRGB(40, 40, 40),
+        BackgroundColor = Color3.fromRGB(3, 8, 22),
+        MainColor = Color3.fromRGB(5, 14, 32),
+        AccentColor = Color3.fromRGB(100, 54, 255),
+        OutlineColor = Color3.fromRGB(15, 52, 107),
         FontColor = Color3.new(1, 1, 1),
-        Font = Font.fromEnum(Enum.Font.Code),
+        Font = Font.fromEnum(Enum.Font.Gotham),
 
-        RedColor = Color3.fromRGB(255, 50, 50),
-        DestructiveColor = Color3.fromRGB(220, 38, 38),
+        RedColor = Color3.fromRGB(255, 75, 105),
+        DestructiveColor = Color3.fromRGB(215, 42, 70),
         DarkColor = Color3.new(0, 0, 0),
         WhiteColor = Color3.new(1, 1, 1),
 
@@ -14887,70 +14887,110 @@ end
 
 getgenv().Library = Library
 return Library
-end)()
-assert(type(Library) == "table" and type(Library.CreateWindow) == "function", "Embedded Obsidian initialization failed.")
--- ================= END COMPLETE OBSIDIAN Library.lua ==================
 
+end)()
+
+assert(type(Library) == "table" and type(Library.CreateWindow) == "function", "Obsidian library initialization failed.")
+
+-- ---------------------------------------------------------------------------
+-- Lua-Re theme: deep navy, electric blue outlines and purple accents.
+-- Every original Obsidian control still uses its native theme registry.
+-- ---------------------------------------------------------------------------
 local Colors = {
-    Background = Color3.fromRGB(3, 8, 23),
-    Main = Color3.fromRGB(4, 12, 31),
-    Accent = Color3.fromRGB(117, 47, 255),
-    Outline = Color3.fromRGB(15, 55, 112),
+    Background = Color3.fromRGB(3, 8, 22),
+    Main = Color3.fromRGB(5, 14, 32),
+    Accent = Color3.fromRGB(100, 54, 255),
+    AccentLight = Color3.fromRGB(143, 105, 255),
+    Outline = Color3.fromRGB(15, 52, 107),
     Text = Color3.fromRGB(226, 234, 255),
     Muted = Color3.fromRGB(147, 171, 218),
-    Red = Color3.fromRGB(255, 90, 112),
-    Green = Color3.fromRGB(36, 218, 147),
+    Red = Color3.fromRGB(255, 75, 105),
+    Green = Color3.fromRGB(35, 218, 150),
 }
 
 Library.ShowCustomCursor = false
 Library.NotifyOnError = false
 Library.ForceCheckbox = false
 Library.ShowToggleFrameInKeybinds = true
-Library.Animations.ToggleWindow = false
-Library.Animations.TabSwitch = false
-Library.Animations.Groupbox = false
-Library.Animations.Dropdown = false
-Library.Animations.KeyPicker = false
 Library.Scheme.BackgroundColor = Colors.Background
 Library.Scheme.MainColor = Colors.Main
 Library.Scheme.AccentColor = Colors.Accent
 Library.Scheme.OutlineColor = Colors.Outline
 Library.Scheme.FontColor = Colors.Text
-Library.Scheme.DarkColor = Color3.fromRGB(3, 9, 24)
-Library.Scheme.RedColor = Colors.Red
+Library.Scheme.DarkColor = Color3.fromRGB(2, 6, 18)
 Library.Scheme.WhiteColor = Color3.new(1, 1, 1)
+Library.Scheme.RedColor = Colors.Red
+Library.Scheme.DestructiveColor = Color3.fromRGB(215, 42, 70)
 Library.Scheme.Font = Font.fromEnum(Enum.Font.Gotham)
 Library.ToggleKeybind = Enum.KeyCode.RightControl
+Library.CornerRadius = 10
 
 local Window = Library:CreateWindow({
-    Title = "Lua-Re",
-    Footer = "License Activation  •  UI Builder  •  v1.3.2f",
-    Size = UDim2.fromOffset(980, 680),
+    Title = "Lua-Re  |  Lua / Luau Obfuscator",
+    Footer = "Lua-Re v1.3.2f  •  Obsidian UI  •  Right Ctrl to toggle",
+    Size = UDim2.fromOffset(1240, 780),
     Center = true,
     AutoShow = true,
     Resizable = true,
-    AlwaysOnTop = true,
+    AlwaysOnTop = false,
     ShowCustomCursor = false,
     ToggleKeybind = Enum.KeyCode.RightControl,
     Font = Enum.Font.Gotham,
     NotifySide = "Right",
+    EnableCompacting = true,
     Animations = {
-        ToggleWindow = false,
-        TabSwitch = false,
-        Groupbox = false,
-        Dropdown = false,
-        KeyPicker = false,
+        ToggleWindow = true,
+        TabSwitch = true,
+        Groupbox = true,
+        Dropdown = true,
+        KeyPicker = true,
     },
 })
 Window:SetCornerRadius(10)
 
 local Options = Library.Options
-local Tabs = {
-    Activation = Window:AddTab("Activation", "key-round"),
-    Builder = Window:AddTab("UI Builder", "boxes"),
-    Gallery = Window:AddTab("Widget Gallery", "layout-grid"),
-    Settings = Window:AddTab("Settings", "settings"),
+local HttpService = game:GetService("HttpService")
+local UIState = {
+    Source = [[-- Lua-Re source editor preview
+local function createGui()
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "MainGui"
+    screenGui.Parent = game.CoreGui
+
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(0, 300, 0, 200)
+    frame.Position = UDim2.new(0.5, -150, 0.5, -100)
+    frame.BackgroundColor3 = Color3.fromRGB(5, 14, 32)
+    frame.Parent = screenGui
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, 0, 0, 50)
+    label.Text = "Hello, Lua-Re!"
+    label.TextColor3 = Color3.new(1, 1, 1)
+    label.BackgroundTransparency = 1
+    label.Parent = frame
+end
+
+createGui()
+]],
+    Methods = {},
+    Settings = {
+        Preset = "Recommended",
+        VMProtection = "High",
+        CompilationMode = "Optimized",
+        OutputFormat = "Luau source",
+        Integrity = "HMAC-SHA256",
+        FragmentCount = 5,
+        UseRuntimeSalt = true,
+        EncryptShortStrings = true,
+        CompressOutput = true,
+        RenameLocals = true,
+        RemoveComments = true,
+        RandomizeBuild = true,
+        IncludeDiagnostics = false,
+    },
 }
+local DEFAULT_SOURCE = UIState.Source
 
 local function notify(title, message, duration)
     pcall(function()
@@ -14963,705 +15003,454 @@ local function notify(title, message, duration)
 end
 
 local function trim(value)
-    value = tostring(value or "")
-    value = value:gsub("^%s+", ""):gsub("%s+$", "")
-    return value
+    return tostring(value or ""):gsub("^%s+", ""):gsub("%s+$", "")
 end
 
-local function safeId(value)
-    value = tostring(value or "Control")
-    value = value:gsub("[^%w_]", "_"):gsub("_+", "_")
-    if value == "" then value = "Control" end
-    if value:match("^%d") then value = "C_" .. value end
-    return value:sub(1, 42)
+local function countEnabledMethods()
+    local count = 0
+    for _, enabled in pairs(UIState.Methods) do
+        if enabled then count += 1 end
+    end
+    return count
 end
 
-local function makeUniqueId(prefix)
-    Shared.__LuaReBuilderSerial = (tonumber(Shared.__LuaReBuilderSerial) or 0) + 1
-    return safeId(prefix) .. "_" .. tostring(Shared.__LuaReBuilderSerial)
-end
-
--- ---------------------------------------------------------------------------
--- Activation tab
--- ---------------------------------------------------------------------------
-local ActivationGroup = Tabs.Activation:AddGroupbox({
-    Side = "Left",
-    Name = "License Activation",
-    Description = "Enter your Lua-Re license key to continue.",
-    IconName = "key-round",
-})
-local InfoGroup = Tabs.Activation:AddGroupbox({
-    Side = "Right",
-    Name = "License Information",
-    Description = "Local client-side validation from the supplied C++ source.",
-    IconName = "shield-check",
-})
-
-ActivationGroup:AddLabel("Lua-Re", true)
-ActivationGroup:AddLabel("Professional Lua / Luau Obfuscator  •  v1.3.2f", true)
-ActivationGroup:AddDivider()
-
-local statusLabel = ActivationGroup:AddLabel("Status: waiting for license key", true, "LuaReActivationStatus")
-local keyInput = ActivationGroup:AddInput("LuaReLicenseKey", {
-    Text = "License key",
-    Default = "",
-    Placeholder = "XXXXX-XXXXX-XXXXX-XXXXX-XXXXX",
-    Numeric = false,
-    Finished = true,
-    ClearTextOnFocus = false,
-    MaxLength = 29,
-    Callback = function() end,
-})
-
-local KNOWN_DIGESTS = {
-    A6D826225806A0A17E08A7E424CC0FF66B15021866FB6D823DC864DDC142873C = true,
-    EFAEEBF96026264009EED1CCDC71477A360C1134DD258448C4CDE8A3CD9DF57C = true,
-    F40D8617BDB357695ACF8238B2C582219F9B21B549E41D06BCAF79B93E1D6285 = true,
-    F9836E63D760C07F5A2F7FD2A06A16FE27154BCEA5649CB3F67045484AF94BD3 = true,
-    ["84FA951409060A5E6CD6A0F7CC98A939FEE6E14C83E05184154C6781F89AE02C"] = true,
+local MethodDefinitions = {
+    {Id="VM", Name="VM (Virtual Machine)", Category="Virtualization", Default=true, Description="Compiles source into a custom virtual instruction stream interpreted by the runtime. In this prototype, the toggle records configuration only."},
+    {Id="RVM2", Name="RVM2 (Runtime VM)", Category="Virtualization", Default=true, Description="Represents the second runtime execution layer. A real backend must generate and execute the runtime payload."},
+    {Id="VM2", Name="VM-2 (Layer 2)", Category="Virtualization", Default=true, Description="Adds a second instruction recoding layer with independent mappings. This UI stores the option without transforming source."},
+    {Id="CONTROL_FLOW", Name="Control Flow", Category="Code Transformation", Default=true, Description="Represents control-flow restructuring, conditional branch changes and flow flattening."},
+    {Id="STRING_ENCRYPTION", Name="String Encryption", Category="Constants", Default=true, Description="Configures string constant encryption and runtime reconstruction for a compatible backend."},
+    {Id="LLS_STRING", Name="LLS String Fragmentation", Category="Constants", Default=true, Description="Represents splitting longer strings into fragments that are reassembled at runtime."},
+    {Id="NUMBER_ENCRYPTION", Name="Number Encryption", Category="Constants", Default=true, Description="Configures number-literal transformation for a backend that implements numeric encoding."},
+    {Id="CONSTANT_ENCRYPTION", Name="Constant Pool Encryption", Category="Constants", Default=true, Description="Represents encryption of constant-pool values and runtime decoding."},
+    {Id="OPCODE_POLYMORPHISM", Name="Opcode Polymorphism", Category="Virtualization", Default=true, Description="Uses per-build opcode mappings so instruction identifiers are not fixed across builds."},
+    {Id="OPERAND_POLYMORPHISM", Name="Operand Polymorphism", Category="Virtualization", Default=true, Description="Varies operand representation and decoding rules across build profiles."},
+    {Id="RENAMING", Name="Identifier Renaming", Category="Code Transformation", Default=true, Description="Renames local identifiers to reduce semantic readability. Scope-aware renaming belongs in the compiler."},
+    {Id="DEAD_CODE", Name="Dead Code Injection", Category="Code Transformation", Default=false, Description="Represents insertion of unreachable or semantically neutral blocks. Generated blocks must be proven safe by the backend."},
+    {Id="JUNK_CODE", Name="Junk Instructions", Category="Code Transformation", Default=false, Description="Represents insertion of harmless noise instructions. It should be used only where correctness can be guaranteed."},
+    {Id="REMOVE_COMMENTS", Name="Remove Comments", Category="Code Transformation", Default=true, Description="Removes comments from generated output; it does not provide cryptographic protection by itself."},
+    {Id="COMPRESSION", Name="Output Compression", Category="Build", Default=true, Description="Compresses the generated payload when the runtime loader supports the selected format."},
+    {Id="METADATA", Name="Metadata Protection", Category="Build", Default=true, Description="Reduces or encodes selected metadata before packaging. Actual behavior depends on backend support."},
+    {Id="ANTI_DEBUG", Name="Anti-Debug", Category="Runtime Protection", Default=true, Description="Represents checks for debugging or inspection signals. Runtime checks are not a guarantee against analysis."},
+    {Id="ANTI_TAMPER", Name="Anti-Tamper", Category="Runtime Protection", Default=true, Description="Represents runtime integrity checks intended to detect modification of protected content."},
+    {Id="ANTI_DUMP", Name="Anti-Dumper", Category="Runtime Protection", Default=true, Description="Represents mitigation against straightforward payload extraction. Client-side code cannot prevent all dumping."},
+    {Id="ANTI_EMULATOR", Name="Anti-Emulator", Category="Runtime Protection", Default=false, Description="Represents environment consistency checks. False positives and runtime compatibility must be tested carefully."},
+    {Id="ENV_GUARD", Name="Environment Guard", Category="Runtime Protection", Default=true, Description="Checks required runtime capabilities before executing the protected payload."},
+    {Id="BREAK_MEMORY", Name="BreakMemory", Category="Runtime Protection", Default=false, Description="Represents memory-state mutation logic. It must preserve valid instruction semantics in a real VM."},
+    {Id="MEMORY_GRAPHER", Name="MemoryGrapher", Category="Diagnostics", Default=false, Description="Represents structural graph validation for generated VM blocks and runtime state."},
+    {Id="RUNTIME_SALT", Name="Runtime Salt", Category="Cryptography", Default=true, Description="Requests per-build or per-execution salt material. A real backend must use a cryptographically sound random source."},
+    {Id="INTEGRITY", Name="Integrity Verification", Category="Cryptography", Default=true, Description="Requests message authentication for encrypted fragments and protected payloads."},
+    {Id="REVERSE_STRING", Name="Reverse String", Category="Text Transformations", Default=false, Description="Simple reversible text transform. This is encoding, not strong encryption."},
+    {Id="ROT13", Name="ROT13", Category="Text Transformations", Default=false, Description="Classic letter substitution useful as a transformation demo, not as a protection mechanism."},
+    {Id="HEX_ENCODING", Name="Hex Encoding", Category="Text Transformations", Default=false, Description="Encodes bytes as hexadecimal text. It does not make the original content cryptographically secure."},
+    {Id="HEX_ENCODE", Name="EncodeHex Variant", Category="Text Transformations", Default=false, Description="Selects the EncodeHex-style transformation variant. This profile option does not transform source until connected to an implementation."},
+    {Id="HEX_DECODE", Name="DecodeHex Variant", Category="Text Transformations", Default=false, Description="Selects the DecodeHex-style transformation variant. This profile option does not transform source until connected to an implementation."},
+    {Id="REGISTER_SHUFFLING", Name="Register Shuffling", Category="Virtualization", Default=true, Description="Represents randomized register assignment in a generated VM program. A compiler must preserve dataflow and register semantics."},
+    {Id="INSTRUCTION_MUTATION", Name="Instruction Mutation", Category="Virtualization", Default=true, Description="Represents per-build variation of equivalent instruction forms, where supported by the VM backend."},
+    {Id="CLOSURE_WRAPPING", Name="Closure Wrapping", Category="Runtime Protection", Default=false, Description="Represents wrapping selected functions/closures in a compatible runtime abstraction."},
+    {Id="API_WRAPPING", Name="API Call Wrapping", Category="Runtime Protection", Default=false, Description="Represents wrappers around selected environment calls. Compatibility must be verified against the target runtime."},
+    {Id="LPH_MACROS", Name="LPH Macro Compatibility", Category="Compatibility", Default=false, Description="Compatibility option for parsing selected LPH-style macros. It does not create or emulate executor-only capabilities."},
+    {Id="ENCFUNC", Name="ENCFUNC Marker", Category="Compatibility", Default=false, Description="Recognizes an ENCFUNC-style marker in a future source-processing backend."},
+    {Id="ENCSTR", Name="ENCSTR Marker", Category="Compatibility", Default=false, Description="Recognizes an ENCSTR-style marker in a future source-processing backend."},
+    {Id="ENCNUM", Name="ENCNUM Marker", Category="Compatibility", Default=false, Description="Recognizes an ENCNUM-style marker in a future source-processing backend."},
+    {Id="NO_VIRTUALIZE", Name="NO_VIRTUALIZE Marker", Category="Compatibility", Default=false, Description="Represents a marker that excludes selected functions from VM conversion when backend support exists."},
+    {Id="JIT_MARKERS", Name="JIT Marker Compatibility", Category="Compatibility", Default=false, Description="Recognizes JIT-style source markers; this UI does not supply a JIT compiler."},
+    {Id="JIT_MAX_MARKERS", Name="JIT_MAX Marker Compatibility", Category="Compatibility", Default=false, Description="Recognizes JIT_MAX-style source markers; runtime support depends on the backend and target VM."},
+    {Id="LINE_MARKER", Name="LINE Marker Compatibility", Category="Compatibility", Default=false, Description="Recognizes line-information markers for source transformation. Debug metadata behavior must be tested."},
+    {Id="OBFUSCATED_MARKER", Name="OBFUSCATED Marker Compatibility", Category="Compatibility", Default=false, Description="Recognizes an OBFUSCATED-style marker for integration with a source preprocessor."},
+    {Id="CONSTANT_SPLITTING", Name="Constant Splitting", Category="Constants", Default=true, Description="Represents splitting constant data across chunks or records before packaging."},
+    {Id="ANTI_EMULATOR_L1_L4", Name="Anti-Emulator L1–L4", Category="Runtime Protection", Default=false, Description="Represents layered environment consistency checks. False positives and compatibility regressions need careful testing."},
 }
 
-local ALLOWED = {}
-for character in string.gmatch("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:?!(_/)*\\", ".") do
-    ALLOWED[character] = true
+local MethodByName = {}
+local MethodNames = {}
+for _, definition in ipairs(MethodDefinitions) do
+    UIState.Methods[definition.Id] = definition.Default
+    MethodByName[definition.Name] = definition
+    table.insert(MethodNames, definition.Name)
 end
 
-local function normalizeKey(raw)
-    local key = trim(raw):upper():gsub("\\_", "_")
-    return key
-end
-
-local function validKeyFormat(key)
-    if #key ~= 29 then return false end
-    for _, position in ipairs({6, 12, 18, 24}) do
-        if key:sub(position, position) ~= "-" then return false end
-    end
-    for index = 1, #key do
-        if index ~= 6 and index ~= 12 and index ~= 18 and index ~= 24 then
-            if not ALLOWED[key:sub(index, index)] then return false end
-        end
-    end
-    return true
-end
-
-local function computeSha256Hex(value)
-    local providers = {}
-    if type(crypt) == "table" and type(crypt.hash) == "function" then
-        table.insert(providers, function() return crypt.hash(value, "sha256") end)
-        table.insert(providers, function() return crypt.hash("sha256", value) end)
-    end
-    if type(syn) == "table" and type(syn.crypt) == "table" and type(syn.crypt.hash) == "function" then
-        table.insert(providers, function() return syn.crypt.hash(value, "sha256") end)
-        table.insert(providers, function() return syn.crypt.hash("sha256", value) end)
-    end
-    for _, provider in ipairs(providers) do
-        local ok, result = pcall(provider)
-        if ok and type(result) == "string" then
-            result = result:gsub("%s+", ""):upper()
-            if #result == 64 and result:match("^[0-9A-F]+$") then
-                return result
-            end
-        end
-    end
-    return nil
-end
-
-local activated = false
-local function setActivationStatus(message, isError)
-    if statusLabel and type(statusLabel.SetText) == "function" then
-        pcall(function()
-            statusLabel:SetText((isError and "Status: ERROR  •  " or "Status:  ") .. message)
-        end)
-    end
-end
-
-ActivationGroup:AddButton({
-    Text = "Activate License",
-    Tooltip = "Validate the entered key against the digests from the supplied C++ file.",
-    Func = function()
-        local raw = Options.LuaReLicenseKey and Options.LuaReLicenseKey.Value or ""
-        local key = normalizeKey(raw)
-        activated = false
-        Shared.__LuaReLicenseActivated = false
-        Shared.__LuaReLicenseKeyValidated = false
-
-        if key == "" then
-            setActivationStatus("Enter a license key first.", true)
-            notify("Lua-Re activation", "Enter a license key first.")
-            return
-        end
-        if not validKeyFormat(key) then
-            setActivationStatus("Invalid key format. Expected five groups of five characters.", true)
-            notify("Lua-Re activation", "Invalid key format.")
-            return
-        end
-
-        local digest = computeSha256Hex(key)
-        if not digest then
-            setActivationStatus("SHA-256 is unavailable in this executor; key not verified.", true)
-            notify("Lua-Re activation", "This executor does not expose a compatible SHA-256 function.", 5)
-            return
-        end
-        if not KNOWN_DIGESTS[digest] then
-            setActivationStatus("License key was not recognized.", true)
-            notify("Lua-Re activation", "License key was not recognized.")
-            return
-        end
-
-        activated = true
-        Shared.__LuaReLicenseActivated = true
-        Shared.__LuaReLicenseKeyValidated = true
-        setActivationStatus("License key accepted. Activation successful.", false)
-        notify("Lua-Re activation", "License key accepted.", 4)
-        local callback = Shared.__LuaReLicenseOnActivated
-        if type(callback) == "function" then
-            local ok, err = pcall(callback, key)
-            if not ok then
-                warn("Lua-Re activation callback failed: " .. tostring(err))
-            end
-        end
-    end,
-})
-
-ActivationGroup:AddButton({
-    Text = "Clear Key",
-    Tooltip = "Clear the license field and reset the activation state.",
-    Func = function()
-        activated = false
-        Shared.__LuaReLicenseActivated = false
-        Shared.__LuaReLicenseKeyValidated = false
-        if Options.LuaReLicenseKey and Options.LuaReLicenseKey.SetValue then
-            Options.LuaReLicenseKey:SetValue("")
-        end
-        setActivationStatus("Waiting for license key.", false)
-        notify("Lua-Re activation", "Key cleared.", 2)
-    end,
-})
-
-InfoGroup:AddLabel("Product: Lua-Re", true)
-InfoGroup:AddLabel("Version: v1.3.2f", true)
-InfoGroup:AddLabel("Runtime: Roblox / Luau UI", true)
-InfoGroup:AddDivider()
-InfoGroup:AddLabel("The key is checked only after clicking Activate License.", true)
-InfoGroup:AddLabel("A valid digest unlocks the activation state in this executor environment.", true)
-InfoGroup:AddLabel("Client-side checks can be modified. Use a server endpoint for commercial licensing.", true)
-
--- ---------------------------------------------------------------------------
--- Dynamic UI Builder: create groupboxes and then add real Obsidian controls to
--- the selected group. Each control's callback is wired to an observable action.
--- ---------------------------------------------------------------------------
-local BuilderIntro = Tabs.Builder:AddGroupbox({
-    Side = "Left",
-    Name = "Create Groupbox",
-    Description = "Create a new user-defined group on either side of this tab.",
-    IconName = "boxes",
-})
-local BuilderControls = Tabs.Builder:AddGroupbox({
-    Side = "Right",
-    Name = "Add Controls",
-    Description = "Choose a group and add a functional widget through Obsidian's API.",
-    IconName = "sliders-horizontal",
-})
-local BuilderManage = Tabs.Builder:AddGroupbox({
-    Side = "Left",
-    Name = "Manage Groups",
-    Description = "Select or remove a group created in this session.",
-    IconName = "settings-2",
-})
-
-BuilderIntro:AddInput("BuilderNewGroupName", {
-    Text = "Group name",
-    Default = "Custom Group",
-    Placeholder = "e.g. Movement, Visuals, Settings",
-    Finished = true,
-    MaxLength = 48,
-})
-BuilderIntro:AddInput("BuilderGroupDescription", {
-    Text = "Description (optional)",
-    Default = "Created from the UI Builder",
-    Placeholder = "Group description",
-    Finished = true,
-    MaxLength = 100,
-})
-BuilderIntro:AddDropdown("BuilderGroupSide", {
-    Text = "Group side",
-    Values = {"Left", "Right"},
-    Default = "Left",
-    Multi = false,
-})
-
-local groups = {}
-local groupNames = {}
-local groupControlCounts = {}
-local MAX_GROUPS = 16
-local MAX_CONTROLS_PER_GROUP = 64
-local selectedGroupLabel = BuilderManage:AddLabel("Created groups: 0", true)
-
-BuilderManage:AddDropdown("BuilderTargetGroup", {
-    Text = "Target group",
-    Values = {"No groups yet"},
-    Default = "No groups yet",
-    Multi = false,
-    Callback = function(value)
-        if groups[value] then
-            selectedGroupLabel:SetText("Selected group: " .. tostring(value) .. "  |  controls: " .. tostring(groupControlCounts[value] or 0))
-        end
-    end,
-})
-
-local function refreshGroupDropdown(preferred)
-    if #groupNames == 0 then
-        Options.BuilderTargetGroup:SetValues({"No groups yet"})
-        Options.BuilderTargetGroup:SetValue("No groups yet")
-        selectedGroupLabel:SetText("Created groups: 0")
-        return
-    end
-    Options.BuilderTargetGroup:SetValues(groupNames)
-    local target = preferred
-    if not target or not groups[target] then
-        target = groupNames[#groupNames]
-    end
-    Options.BuilderTargetGroup:SetValue(target)
-    selectedGroupLabel:SetText("Selected group: " .. target .. "  |  controls: " .. tostring(groupControlCounts[target] or 0))
-end
-
-BuilderIntro:AddButton({
-    Text = "Create Groupbox",
-    Tooltip = "Adds a real Obsidian groupbox to this Builder tab.",
-    Func = function()
-        if #groupNames >= MAX_GROUPS then
-            notify("UI Builder", "Group limit reached (" .. tostring(MAX_GROUPS) .. ").")
-            return
-        end
-        local baseName = trim(Options.BuilderNewGroupName.Value)
-        if baseName == "" then baseName = "Custom Group" end
-        local name = baseName
-        local suffix = 2
-        while groups[name] do
-            name = baseName .. " " .. tostring(suffix)
-            suffix = suffix + 1
-        end
-        local side = Options.BuilderGroupSide.Value or "Left"
-        local description = trim(Options.BuilderGroupDescription.Value)
-        local ok, groupOrError = pcall(function()
-            return Tabs.Builder:AddGroupbox({
-                Side = side,
-                Name = name,
-                Description = description ~= "" and description or nil,
-                IconName = "boxes",
-                Collapsed = false,
-            })
-        end)
-        if not ok or not groupOrError then
-            notify("UI Builder", "Could not create groupbox: " .. tostring(groupOrError), 5)
-            return
-        end
-        groups[name] = groupOrError
-        groupControlCounts[name] = 0
-        table.insert(groupNames, name)
-        refreshGroupDropdown(name)
-        notify("UI Builder", "Created groupbox: " .. name, 3)
-    end,
-})
-
-BuilderManage:AddButton({
-    Text = "Remove Selected Group",
-    Tooltip = "Destroys the selected custom groupbox and all controls inside it.",
-    Func = function()
-        local name = Options.BuilderTargetGroup.Value
-        local group = groups[name]
-        if not group then
-            notify("UI Builder", "Choose a group created in this session first.")
-            return
-        end
-        pcall(function() group:Destroy() end)
-        groups[name] = nil
-        groupControlCounts[name] = nil
-        for index, existingName in ipairs(groupNames) do
-            if existingName == name then
-                table.remove(groupNames, index)
-                break
-            end
-        end
-        refreshGroupDropdown(groupNames[#groupNames])
-        notify("UI Builder", "Removed groupbox: " .. name, 3)
-    end,
-})
-
-local CONTROL_TYPES = {
-    "Button", "Button + Sub-button", "Toggle", "Checkbox", "Slider", "Input",
-    "Dropdown", "Multi Dropdown", "Label", "Divider", "Key Picker",
-    "Color Picker", "Tabbox", "Dependency Box", "Image", "Video", "Viewport",
-    "Custom GUI Passthrough",
+local Tabs = {
+    Main = Window:AddTab("Main", "house"),
+    Methods = Window:AddTab("Methods", "boxes"),
+    Details = Window:AddTab("Method Details", "shield-check"),
+    Settings = Window:AddTab("Settings", "settings"),
+    API = Window:AddTab("Obsidian API", "layout-grid"),
+    About = Window:AddTab("About", "info"),
 }
 
-BuilderControls:AddDropdown("BuilderControlType", {
-    Text = "Control type",
-    Values = CONTROL_TYPES,
-    Default = "Button",
-    Multi = false,
-})
-BuilderControls:AddInput("BuilderControlName", {
-    Text = "Control text / title",
-    Default = "Example Control",
-    Placeholder = "Button caption or element title",
-    Finished = true,
-    MaxLength = 48,
-})
-BuilderControls:AddInput("BuilderControlValue", {
-    Text = "Optional value / asset ID",
-    Default = "",
-    Placeholder = "Used for Image/Video URI where relevant",
-    Finished = true,
-    MaxLength = 180,
-})
+-- ---------------------------------------------------------------------------
+-- MAIN: source input + quick profile summary.
+-- ---------------------------------------------------------------------------
+local MainSource = Tabs.Main:AddGroupbox({Side="Left", Name="Lua / Luau Source", Description="Paste or edit the source used for a future backend integration.", IconName="file-code"})
+local MainQuick = Tabs.Main:AddGroupbox({Side="Right", Name="Quick Configuration", Description="Current profile and immediate UI actions.", IconName="sliders-horizontal"})
+local MainStatus = Tabs.Main:AddGroupbox({Side="Right", Name="Protection Summary", Description="Live summary of selected options.", IconName="shield-check"})
 
-local function addGeneratedControl(groupName, controlType, controlName, detail)
-    local group = groups[groupName]
-    assert(group, "Selected custom group was not found.")
-    assert((groupControlCounts[groupName] or 0) < MAX_CONTROLS_PER_GROUP,
-        "Control limit reached for this group (" .. tostring(MAX_CONTROLS_PER_GROUP) .. ").")
-
-    local id = makeUniqueId("Builder_" .. controlType .. "_" .. controlName)
-    local element = nil
-    local label = controlName
-
-    if controlType == "Button" then
-        element = group:AddButton({
-            Text = label,
-            Tooltip = "Dynamically created Obsidian button.",
-            Func = function()
-                print("[Lua-Re Builder] Button clicked: " .. label)
-                notify("UI Builder", "Button clicked: " .. label, 2)
-            end,
-        })
-    elseif controlType == "Button + Sub-button" then
-        local parentButton = group:AddButton({
-            Text = label,
-            Tooltip = "Main button with an attached sub-button.",
-            Func = function() notify("UI Builder", "Main button clicked: " .. label, 2) end,
-        })
-        parentButton:AddButton({
-            Text = label .. " • Sub",
-            Func = function() notify("UI Builder", "Sub-button clicked: " .. label, 2) end,
-        })
-        element = parentButton
-    elseif controlType == "Toggle" then
-        element = group:AddToggle(id, {
-            Text = label,
-            Default = false,
-            Callback = function(value)
-                print("[Lua-Re Builder] Toggle " .. label .. " = " .. tostring(value))
-            end,
-        })
-    elseif controlType == "Checkbox" then
-        element = group:AddCheckbox(id, {
-            Text = label,
-            Default = false,
-            Callback = function(value)
-                print("[Lua-Re Builder] Checkbox " .. label .. " = " .. tostring(value))
-            end,
-        })
-    elseif controlType == "Slider" then
-        element = group:AddSlider(id, {
-            Text = label,
-            Default = 50,
-            Min = 0,
-            Max = 100,
-            Rounding = 0,
-            Compact = false,
-            Callback = function(value)
-                print("[Lua-Re Builder] Slider " .. label .. " = " .. tostring(value))
-            end,
-        })
-    elseif controlType == "Input" then
-        element = group:AddInput(id, {
-            Text = label,
-            Default = "",
-            Placeholder = "Type here...",
-            Numeric = false,
-            Finished = true,
-            ClearTextOnFocus = false,
-            Callback = function(value)
-                print("[Lua-Re Builder] Input " .. label .. " = " .. tostring(value))
-            end,
-        })
-    elseif controlType == "Dropdown" then
-        element = group:AddDropdown(id, {
-            Text = label,
-            Values = {"Option A", "Option B", "Option C"},
-            Default = "Option A",
-            Multi = false,
-            Searchable = false,
-            Callback = function(value)
-                print("[Lua-Re Builder] Dropdown " .. label .. " = " .. tostring(value))
-            end,
-        })
-    elseif controlType == "Multi Dropdown" then
-        element = group:AddDropdown(id, {
-            Text = label,
-            Values = {"Option A", "Option B", "Option C"},
-            Default = "Option A",
-            Multi = true,
-            Searchable = false,
-            Callback = function(value)
-                local selected = {}
-                if type(value) == "table" then
-                    for item, enabled in pairs(value) do
-                        if enabled then table.insert(selected, tostring(item)) end
-                    end
-                end
-                print("[Lua-Re Builder] Multi dropdown " .. label .. " = " .. table.concat(selected, ", "))
-            end,
-        })
-    elseif controlType == "Label" then
-        element = group:AddLabel(label, true, id)
-    elseif controlType == "Divider" then
-        group:AddDivider()
-        element = nil
-    elseif controlType == "Key Picker" then
-        local parentToggle = group:AddToggle(id .. "_Toggle", {
-            Text = label,
-            Default = false,
-            Callback = function(value)
-                print("[Lua-Re Builder] Key-picker owner toggle " .. label .. " = " .. tostring(value))
-            end,
-        })
-        parentToggle:AddKeyPicker(id .. "_Key", {
-            Text = "Hotkey",
-            Default = "RightControl",
-            Mode = "Toggle",
-            Callback = function(value)
-                print("[Lua-Re Builder] Key picker " .. label .. " = " .. tostring(value))
-            end,
-            ChangedCallback = function(value)
-                print("[Lua-Re Builder] Key changed " .. label .. " = " .. tostring(value))
-            end,
-        })
-        element = parentToggle
-    elseif controlType == "Color Picker" then
-        local parentToggle = group:AddToggle(id .. "_Toggle", {
-            Text = label,
-            Default = true,
-        })
-        parentToggle:AddColorPicker(id .. "_Color", {
-            Title = label .. " color",
-            Default = Colors.Accent,
-            Callback = function(value)
-                print("[Lua-Re Builder] Color picker " .. label .. " changed to " .. tostring(value))
-            end,
-        })
-        element = parentToggle
-    elseif controlType == "Tabbox" then
-        local tabbox = group:AddTabbox({Name = label})
-        local firstTab = tabbox:AddTab("General")
-        local secondTab = tabbox:AddTab("Options")
-        firstTab:AddLabel("Dynamic tabbox: " .. label, true)
-        firstTab:AddButton({Text = "General action", Func = function() notify("UI Builder", "General tab action", 2) end})
-        secondTab:AddToggle(id .. "_SubToggle", {Text = "Sample nested toggle", Default = false})
-        element = tabbox
-    elseif controlType == "Dependency Box" then
-        local master = group:AddToggle(id .. "_Master", {
-            Text = label .. " • enable dependent items",
-            Default = false,
-        })
-        local dependencyBox = group:AddDependencyBox()
-        dependencyBox:AddLabel("These elements appear only when the toggle above is enabled.", true)
-        dependencyBox:AddToggle(id .. "_DependentToggle", {Text = "Dependent toggle", Default = false})
-        dependencyBox:AddButton({Text = "Dependent action", Func = function() notify("UI Builder", "Dependent action executed", 2) end})
-        dependencyBox:SetupDependencies({{master, true}})
-        element = dependencyBox
-    elseif controlType == "Image" then
-        local asset = trim(detail)
-        if asset == "" then asset = "rbxassetid://0" end
-        if not asset:find(":", 1, true) and asset:match("^%d+$") then
-            asset = "rbxassetid://" .. asset
-        end
-        element = group:AddImage(id, {Image = asset, Height = 120, Visible = true})
-    elseif controlType == "Video" then
-        local asset = trim(detail)
-        assert(asset ~= "", "Enter a video asset URI/ID in Optional value / asset ID first.")
-        if not asset:find(":", 1, true) and asset:match("^%d+$") then
-            asset = "rbxassetid://" .. asset
-        end
-        element = group:AddVideo(id, {Video = asset, Height = 145, Looped = false, Playing = false, Volume = 0.7})
-    elseif controlType == "Viewport" then
-        element = group:AddViewport(id, {Object = nil, Height = 150, Clone = true, AutoFocus = true, Interactive = false})
-    elseif controlType == "Custom GUI Passthrough" then
-        local frame = Instance.new("Frame")
-        frame.Name = id .. "_CustomFrame"
-        frame.BackgroundColor3 = Colors.Main
-        frame.BorderSizePixel = 0
-        frame.Size = UDim2.new(1, 0, 0, 34)
-        local radius = Instance.new("UICorner")
-        radius.CornerRadius = UDim.new(0, 6)
-        radius.Parent = frame
-        local stroke = Instance.new("UIStroke")
-        stroke.Color = Colors.Outline
-        stroke.Thickness = 1
-        stroke.Parent = frame
-        local textLabel = Instance.new("TextLabel")
-        textLabel.BackgroundTransparency = 1
-        textLabel.Size = UDim2.fromScale(1, 1)
-        textLabel.Font = Enum.Font.Gotham
-        textLabel.TextSize = 12
-        textLabel.TextColor3 = Colors.Text
-        textLabel.Text = label .. "  •  custom GUI"
-        textLabel.Parent = frame
-        element = group:AddUIPassthrough(id, {Instance = frame, Height = 34})
+MainSource:AddLabel("SOURCE EDITOR  •  LUA / LUAU", true)
+local CodeBox = Instance.new("TextBox")
+CodeBox.Name = "LuaReSourceEditor"
+CodeBox.BackgroundColor3 = Colors.Main
+CodeBox.BorderSizePixel = 0
+CodeBox.ClearTextOnFocus = false
+CodeBox.MultiLine = true
+CodeBox.Text = UIState.Source
+CodeBox.TextColor3 = Colors.Text
+CodeBox.PlaceholderText = "Paste Lua/Luau source here..."
+CodeBox.PlaceholderColor3 = Colors.Muted
+CodeBox.TextSize = 13
+CodeBox.Font = Enum.Font.Code
+CodeBox.TextWrapped = false
+CodeBox.TextXAlignment = Enum.TextXAlignment.Left
+CodeBox.TextYAlignment = Enum.TextYAlignment.Top
+CodeBox.Size = UDim2.new(1, 0, 0, 245)
+CodeBox.Position = UDim2.fromOffset(0, 0)
+CodeBox.Parent = nil
+local CodePadding = Instance.new("UIPadding")
+CodePadding.PaddingLeft = UDim.new(0, 10)
+CodePadding.PaddingRight = UDim.new(0, 10)
+CodePadding.PaddingTop = UDim.new(0, 9)
+CodePadding.Parent = CodeBox
+local CodeCorner = Instance.new("UICorner")
+CodeCorner.CornerRadius = UDim.new(0, 7)
+CodeCorner.Parent = CodeBox
+local CodeStroke = Instance.new("UIStroke")
+CodeStroke.Color = Colors.Outline
+CodeStroke.Thickness = 1
+CodeStroke.Parent = CodeBox
+MainSource:AddUIPassthrough("LuaReSourceEditorPassthrough", {Instance=CodeBox, Height=250})
+MainSource:AddLabel("The source box is functional. This UI preview does not compile or obfuscate the source yet.", true)
+MainSource:AddButton({Text="Check Source Input", Tooltip="Checks whether source has been entered.", Func=function()
+    UIState.Source = CodeBox.Text or ""
+    if trim(UIState.Source) == "" then
+        notify("Lua-Re", "Source is empty.", 3)
     else
-        error("Unsupported control type: " .. tostring(controlType))
+        notify("Lua-Re", "Source input detected (" .. tostring(#UIState.Source) .. " characters).", 3)
     end
+end})
+MainSource:AddButton({Text="Reset Sample Source", Func=function()
+    CodeBox.Text = DEFAULT_SOURCE
+    UIState.Source = DEFAULT_SOURCE
+    notify("Lua-Re", "Restored the original sample source.", 2)
+end})
 
-    groupControlCounts[groupName] = (groupControlCounts[groupName] or 0) + 1
-    selectedGroupLabel:SetText("Selected group: " .. groupName .. "  |  controls: " .. tostring(groupControlCounts[groupName]))
-    return element
+local applyPreset
+MainQuick:AddDropdown("LuaReQuickPreset", {Text="Protection preset", Values={"Performance", "Balanced", "Recommended", "Maximum"}, Default="Recommended", Callback=function(value)
+    if applyPreset then applyPreset(value) else UIState.Settings.Preset = value end
+end})
+MainQuick:AddDropdown("LuaReQuickVMProtection", {Text="VM protection", Values={"Low", "Medium", "High", "Maximum"}, Default="High", Callback=function(value) UIState.Settings.VMProtection = value end})
+MainQuick:AddDropdown("LuaReQuickCompileMode", {Text="Compilation mode", Values={"Fast", "Balanced", "Optimized"}, Default="Optimized", Callback=function(value) UIState.Settings.CompilationMode = value end})
+MainQuick:AddDropdown("LuaReQuickOutput", {Text="Target format", Values={"Lua source", "Luau source", "Lua bytecode"}, Default="Luau source", Callback=function(value) UIState.Settings.OutputFormat = value end})
+
+local enabledCountLabel = MainStatus:AddLabel("Enabled methods: 0", true)
+local sourceLengthLabel = MainStatus:AddLabel("Source characters: 0", true)
+local selectedPresetLabel = MainStatus:AddLabel("Preset: Recommended", true)
+MainStatus:AddLabel("Backend status: UI prototype only", true)
+local function refreshSummary()
+    enabledCountLabel:SetText("Enabled methods: " .. tostring(countEnabledMethods()) .. " / " .. tostring(#MethodDefinitions))
+    sourceLengthLabel:SetText("Source characters: " .. tostring(#(CodeBox.Text or "")))
+    selectedPresetLabel:SetText("Preset: " .. tostring(UIState.Settings.Preset))
+end
+CodeBox:GetPropertyChangedSignal("Text"):Connect(refreshSummary)
+
+MainStatus:AddButton({Text="Print Active Profile", Tooltip="Prints the selected method and settings table to the console.", Func=function()
+    UIState.Source = CodeBox.Text or ""
+    local payload = {
+        version = "1.3.2f",
+        preset = UIState.Settings.Preset,
+        settings = UIState.Settings,
+        methods = UIState.Methods,
+        sourceLength = #UIState.Source,
+        engineConnected = false,
+    }
+    local ok, encoded = pcall(function() return HttpService:JSONEncode(payload) end)
+    if ok then
+        print("[Lua-Re profile] " .. encoded)
+        notify("Lua-Re", "Profile printed to the console. No obfuscation was performed.", 4)
+    else
+        notify("Lua-Re", "Could not serialize profile: " .. tostring(encoded), 4)
+    end
+end})
+MainStatus:AddButton({Text="Open Methods", Func=function() notify("Lua-Re", "Select the Methods tab in the left navigation to edit method switches.", 3) end})
+
+-- ---------------------------------------------------------------------------
+-- METHODS: all method switches are real Obsidian toggles and update UIState.
+-- Split across three groups to keep the large method catalogue navigable.
+-- ---------------------------------------------------------------------------
+local MethodGroups = {
+    Core = Tabs.Methods:AddGroupbox({Side="Left", Name="VM & Transformations", Description="Virtualization and source transformation options.", IconName="boxes"}),
+    Constants = Tabs.Methods:AddGroupbox({Side="Left", Name="Constants & Build", Description="Constant handling and output packaging.", IconName="database"}),
+    Runtime = Tabs.Methods:AddGroupbox({Side="Right", Name="Runtime Protection", Description="Optional checks and runtime-integrity features.", IconName="shield-check"}),
+    Text = Tabs.Methods:AddGroupbox({Side="Right", Name="Text Encoders & Diagnostics", Description="Lightweight transforms and diagnostic options.", IconName="binary"}),
+}
+
+local MethodGroupFor = {
+    VM="Core", RVM2="Core", VM2="Core", CONTROL_FLOW="Core", OPCODE_POLYMORPHISM="Core", OPERAND_POLYMORPHISM="Core", RENAMING="Core", DEAD_CODE="Core", JUNK_CODE="Core",
+    STRING_ENCRYPTION="Constants", LLS_STRING="Constants", NUMBER_ENCRYPTION="Constants", CONSTANT_ENCRYPTION="Constants", REMOVE_COMMENTS="Constants", COMPRESSION="Constants", METADATA="Constants",
+    ANTI_DEBUG="Runtime", ANTI_TAMPER="Runtime", ANTI_DUMP="Runtime", ANTI_EMULATOR="Runtime", ENV_GUARD="Runtime", BREAK_MEMORY="Runtime", MEMORY_GRAPHER="Runtime", RUNTIME_SALT="Runtime", INTEGRITY="Runtime",
+    REVERSE_STRING="Text", ROT13="Text", HEX_ENCODING="Text", HEX_ENCODE="Text", HEX_DECODE="Text",
+    REGISTER_SHUFFLING="Core", INSTRUCTION_MUTATION="Core", CLOSURE_WRAPPING="Runtime", API_WRAPPING="Runtime",
+    LPH_MACROS="Text", ENCFUNC="Text", ENCSTR="Text", ENCNUM="Text", NO_VIRTUALIZE="Text", JIT_MARKERS="Text", JIT_MAX_MARKERS="Text", LINE_MARKER="Text", OBFUSCATED_MARKER="Text",
+    CONSTANT_SPLITTING="Constants", ANTI_EMULATOR_L1_L4="Runtime",
+}
+
+for _, definition in ipairs(MethodDefinitions) do
+    local methodId = definition.Id
+    local group = MethodGroups[MethodGroupFor[methodId]]
+    group:AddToggle("Method_" .. methodId, {
+        Text = definition.Name,
+        Default = definition.Default,
+        Tooltip = definition.Description,
+        Callback = function(value)
+            UIState.Methods[methodId] = value == true
+            refreshSummary()
+        end,
+    })
 end
 
-BuilderControls:AddButton({
-    Text = "Add Control to Selected Group",
-    Tooltip = "Creates the selected control type using the actual Obsidian API method.",
-    Func = function()
-        local groupName = Options.BuilderTargetGroup.Value
-        local controlType = Options.BuilderControlType.Value or "Button"
-        local controlName = trim(Options.BuilderControlName.Value)
-        local detail = trim(Options.BuilderControlValue.Value)
-        if not groups[groupName] then
-            notify("UI Builder", "Create and select a groupbox first.")
-            return
+local PresetOverrides = {
+    Performance = {
+        RVM2=false, VM2=false, CONTROL_FLOW=false, LLS_STRING=false, NUMBER_ENCRYPTION=false,
+        CONSTANT_ENCRYPTION=false, OPCODE_POLYMORPHISM=false, OPERAND_POLYMORPHISM=false,
+        DEAD_CODE=false, JUNK_CODE=false, ANTI_DEBUG=false, ANTI_EMULATOR=false,
+        BREAK_MEMORY=false, MEMORY_GRAPHER=false, RUNTIME_SALT=false, INTEGRITY=false,
+        REGISTER_SHUFFLING=false, INSTRUCTION_MUTATION=false, CONSTANT_SPLITTING=false,
+    },
+    Balanced = {
+        RVM2=false, VM2=false, CONTROL_FLOW=true, STRING_ENCRYPTION=true, LLS_STRING=false,
+        NUMBER_ENCRYPTION=true, CONSTANT_ENCRYPTION=true, OPCODE_POLYMORPHISM=false,
+        OPERAND_POLYMORPHISM=false, DEAD_CODE=false, JUNK_CODE=false,
+        ANTI_EMULATOR=false, BREAK_MEMORY=false, MEMORY_GRAPHER=false,
+    },
+    Recommended = {},
+    Maximum = {},
+}
+
+applyPreset = function(presetName)
+    presetName = tostring(presetName or "Recommended")
+    if not PresetOverrides[presetName] then presetName = "Recommended" end
+    UIState.Settings.Preset = presetName
+    local overrides = PresetOverrides[presetName]
+    for _, definition in ipairs(MethodDefinitions) do
+        local value = overrides[definition.Id]
+        if value == nil then value = definition.Default end
+        if presetName == "Maximum" then
+            local weakEncoding = definition.Id == "REVERSE_STRING" or definition.Id == "ROT13" or definition.Id == "HEX_ENCODING" or definition.Id == "HEX_ENCODE" or definition.Id == "HEX_DECODE"
+            local compatibilityMarker = definition.Category == "Compatibility"
+            local diagnosticOnly = definition.Id == "MEMORY_GRAPHER"
+            if not weakEncoding and not compatibilityMarker and not diagnosticOnly then value = true end
         end
-        if controlName == "" then controlName = controlType end
-        local ok, result = pcall(addGeneratedControl, groupName, controlType, controlName, detail)
-        if not ok then
-            notify("UI Builder", "Could not add control: " .. tostring(result), 5)
-            return
+        UIState.Methods[definition.Id] = value == true
+        local option = Options["Method_" .. definition.Id]
+        if option and type(option.SetValue) == "function" then
+            pcall(function() option:SetValue(value == true) end)
         end
-        notify("UI Builder", "Added " .. controlType .. " to " .. groupName .. ".", 2)
-    end,
-})
+    end
+    refreshSummary()
+    notify("Lua-Re", "Applied " .. presetName .. " method preset. These options still require a compatible backend.", 3)
+end
 
-BuilderControls:AddLabel("Supported: Button, Sub-button, Toggle, Checkbox, Slider, Input, Dropdown, Multi Dropdown, Label, Divider, Key Picker, Color Picker, Tabbox, Dependency Box, Image, Video, Viewport and custom GUI passthrough.", true)
-BuilderControls:AddLabel("Limits are intentional to avoid UI overload: 16 custom groups and 64 controls per group per session.", true)
-
--- ---------------------------------------------------------------------------
--- Widget Gallery: working samples plus addon controls and dependencies.
--- ---------------------------------------------------------------------------
-local GalleryLeft = Tabs.Gallery:AddGroupbox({Side = "Left", Name = "Core Controls", Description = "Samples of the main Obsidian control methods."})
-local GalleryRight = Tabs.Gallery:AddGroupbox({Side = "Right", Name = "Add-ons and Layout", Description = "Nested buttons, key/color addons, tabboxes and dependency UI."})
-
-GalleryLeft:AddButton({Text = "Demo Button", Func = function() notify("Widget Gallery", "Demo button callback executed.", 2) end})
-local galleryToggle = GalleryLeft:AddToggle("GalleryToggle", {
-    Text = "Demo Toggle",
-    Default = false,
-    Callback = function(value) print("[Lua-Re Gallery] Demo Toggle =", value) end,
-})
-GalleryLeft:AddCheckbox("GalleryCheckbox", {Text = "Demo Checkbox", Default = true, Callback = function(value) print("[Lua-Re Gallery] Checkbox =", value) end})
-GalleryLeft:AddSlider("GallerySlider", {Text = "Demo Slider", Default = 50, Min = 0, Max = 100, Rounding = 0, Callback = function(value) print("[Lua-Re Gallery] Slider =", value) end})
-GalleryLeft:AddInput("GalleryInput", {Text = "Demo Input", Default = "", Placeholder = "Enter text", Finished = true, Callback = function(value) print("[Lua-Re Gallery] Input =", value) end})
-GalleryLeft:AddDropdown("GalleryDropdown", {Text = "Single Select", Values = {"Alpha", "Beta", "Gamma"}, Default = "Alpha", Multi = false, Callback = function(value) print("[Lua-Re Gallery] Dropdown =", value) end})
-GalleryLeft:AddDropdown("GalleryMultiDropdown", {Text = "Multi Select", Values = {"Alpha", "Beta", "Gamma"}, Default = "Alpha", Multi = true, Callback = function(value) print("[Lua-Re Gallery] Multi dropdown changed", value) end})
-GalleryLeft:AddLabel("Label with wrapping support for descriptive text.", true)
-GalleryLeft:AddDivider()
-
-galleryToggle:AddKeyPicker("GalleryToggleKey", {
-    Text = "Toggle hotkey",
-    Default = "RightShift",
-    Mode = "Toggle",
-    Callback = function(value) print("[Lua-Re Gallery] Key picker =", value) end,
-})
-galleryToggle:AddColorPicker("GalleryToggleColor", {
-    Title = "Accent Preview",
-    Default = Colors.Accent,
-    Callback = function(value) print("[Lua-Re Gallery] Color picker =", value) end,
-})
-
-local nestedButton = GalleryRight:AddButton({Text = "Parent Button", Func = function() notify("Widget Gallery", "Parent action ran.", 2) end})
-nestedButton:AddButton({Text = "Sub-button", Func = function() notify("Widget Gallery", "Sub-button action ran.", 2) end})
-local tabbox = GalleryRight:AddTabbox({Name = "Example Tabbox"})
-local tabboxOne = tabbox:AddTab("Overview")
-local tabboxTwo = tabbox:AddTab("Options")
-tabboxOne:AddLabel("Nested tabs use Tabbox:AddTab().", true)
-tabboxOne:AddButton({Text = "Nested Action", Func = function() notify("Widget Gallery", "Nested tab button works.", 2) end})
-tabboxTwo:AddToggle("GalleryNestedToggle", {Text = "Nested toggle", Default = false})
-local depMaster = GalleryRight:AddToggle("GalleryDependencyMaster", {Text = "Show dependent controls", Default = false})
-local depbox = GalleryRight:AddDependencyBox()
-depbox:AddLabel("Visible only while the master toggle is enabled.", true)
-depbox:AddToggle("GalleryDependentToggle", {Text = "Dependent toggle", Default = false})
-depbox:AddButton({Text = "Dependent Button", Func = function() notify("Widget Gallery", "Dependent button ran.", 2) end})
-depbox:SetupDependencies({{depMaster, true}})
+MethodGroups.Core:AddLabel("These controls represent the Lua-Re method profile; they do not implement the compiler by themselves.", true)
+MethodGroups.Text:AddLabel("ROT13, reverse and hexadecimal encoding are reversible transforms, not strong encryption.", true)
 
 -- ---------------------------------------------------------------------------
--- Settings and lifecycle
+-- METHOD DETAILS: a selection-aware description and the main method options.
 -- ---------------------------------------------------------------------------
-local UISettings = Tabs.Settings:AddGroupbox({Side = "Left", Name = "Interface", Description = "Performance and UI controls."})
-local Lifetime = Tabs.Settings:AddGroupbox({Side = "Right", Name = "Lifecycle", Description = "Close or rebuild the complete UI."})
+local DetailSelector = Tabs.Details:AddGroupbox({Side="Left", Name="Select Method", Description="Choose a method to inspect its category, purpose and default state.", IconName="search"})
+local DetailPanel = Tabs.Details:AddGroupbox({Side="Right", Name="Method Details", Description="Descriptions update when the selection changes.", IconName="info"})
+local DetailSettings = Tabs.Details:AddGroupbox({Side="Right", Name="String / Runtime Settings", Description="Configuration values stored in the current profile.", IconName="sliders-horizontal"})
 
-UISettings:AddToggle("LuaReCustomCursor", {
-    Text = "Custom Cursor",
-    Default = false,
-    Callback = function(value)
-        Library.ShowCustomCursor = value
-    end,
-})
-UISettings:AddToggle("LuaReWindowAnimations", {
-    Text = "Window / Tab Animations",
-    Default = false,
-    Callback = function(value)
-        Library.Animations.ToggleWindow = value
-        Library.Animations.TabSwitch = value
-        Library.Animations.Groupbox = value
-        Library.Animations.Dropdown = value
-        Library.Animations.KeyPicker = value
-    end,
-})
-UISettings:AddToggle("LuaReShowKeybindMenu", {
-    Text = "Show toggle frame in keybinds",
-    Default = true,
-    Callback = function(value) Library.ShowToggleFrameInKeybinds = value end,
-})
-Lifetime:AddLabel("Right Ctrl toggles the Obsidian window visibility.", true)
-Lifetime:AddButton({
-    Text = "Unload Lua-Re UI",
-    Tooltip = "Destroys the complete UI and disconnects the library's signals.",
-    Func = function()
-        Shared.__LuaReUIBuilderRunning = nil
-        Shared.__LuaReLicenseActivated = false
-        Shared.__LuaReLicenseKeyValidated = false
-        Library:Unload()
-    end,
-})
-Lifetime:AddButton({
-    Text = "Print Builder API Example",
-    Func = function()
-        print([[-- Create a tab and group:
-local Tab = Window:AddTab("Main", "user")
-local Group = Tab:AddGroupbox({Side = "Left", Name = "My Group"})
+local detailNameLabel = DetailPanel:AddLabel("Method: " .. MethodDefinitions[1].Name, true)
+local detailCategoryLabel = DetailPanel:AddLabel("Category: " .. MethodDefinitions[1].Category, true)
+local detailStateLabel = DetailPanel:AddLabel("State: Enabled", true)
+local detailDescriptionLabel = DetailPanel:AddLabel(MethodDefinitions[1].Description, true)
+local detailHintLabel = DetailPanel:AddLabel("Select another method from the dropdown to update these details.", true)
 
--- Add controls:
-Group:AddButton({Text = "Action", Func = function() print("clicked") end})
-Group:AddToggle("MyToggle", {Text = "Enabled", Default = false, Callback = function(Value) print(Value) end})
-Group:AddSlider("MySlider", {Text = "Amount", Min = 0, Max = 100, Default = 50, Rounding = 0})
-Group:AddInput("MyInput", {Text = "Text", Default = "", Placeholder = "Type here"})
-Group:AddDropdown("MyDropdown", {Text = "Mode", Values = {"A", "B"}, Default = "A"})
-Group:AddLabel("Description", true)
-Group:AddDivider()
+local function refreshMethodDetails(name)
+    local definition = MethodByName[name] or MethodDefinitions[1]
+    detailNameLabel:SetText("Method: " .. definition.Name)
+    detailCategoryLabel:SetText("Category: " .. definition.Category)
+    detailStateLabel:SetText("State: " .. (UIState.Methods[definition.Id] and "Enabled" or "Disabled"))
+    detailDescriptionLabel:SetText(definition.Description)
+    detailHintLabel:SetText("Configuration key: " .. definition.Id)
+end
 
--- Attach addons:
-local Toggle = Group:AddToggle("AddonToggle", {Text = "Example", Default = false})
-Toggle:AddKeyPicker("Hotkey", {Text = "Key", Default = "RightShift", Mode = "Toggle"})
-Toggle:AddColorPicker("Tint", {Title = "Tint", Default = Color3.fromRGB(117, 47, 255)})]])
-        notify("UI Builder", "API example printed to the executor console.", 3)
-    end,
+DetailSelector:AddDropdown("LuaReSelectedMethod", {
+    Text="Method",
+    Values=MethodNames,
+    Default=MethodDefinitions[1].Name,
+    Multi=false,
+    Searchable=true,
+    Callback=function(value) refreshMethodDetails(value) end,
 })
+DetailSelector:AddLabel("Method count: " .. tostring(#MethodDefinitions), true)
+DetailSelector:AddLabel("Use the Methods tab to enable or disable options.", true)
 
-Shared.__LuaReUIBuilderRunning = {
+DetailSettings:AddCheckbox("LuaReEncryptShortStrings", {Text="Encrypt short strings", Default=true, Callback=function(value) UIState.Settings.EncryptShortStrings=value end})
+DetailSettings:AddSlider("LuaReFragmentCount", {Text="String fragment count", Min=3, Max=7, Default=5, Rounding=0, Compact=false, Callback=function(value) UIState.Settings.FragmentCount=value end})
+DetailSettings:AddToggle("LuaReRuntimeSalt", {Text="Runtime salt", Default=true, Callback=function(value) UIState.Settings.UseRuntimeSalt=value end})
+DetailSettings:AddDropdown("LuaReIntegrityMode", {Text="Integrity verification", Values={"HMAC-SHA256", "SHA-256", "Disabled"}, Default="HMAC-SHA256", Callback=function(value) UIState.Settings.Integrity=value end})
+DetailSettings:AddLabel("These values are saved in UIState and printed by Print Active Profile.", true)
+
+-- ---------------------------------------------------------------------------
+-- SETTINGS: all options are wired to the shared configuration table.
+-- ---------------------------------------------------------------------------
+local GeneralSettings = Tabs.Settings:AddGroupbox({Side="Left", Name="Build Settings", Description="Build profile and output options.", IconName="settings"})
+local OptimizationSettings = Tabs.Settings:AddGroupbox({Side="Right", Name="Optimization & Diagnostics", Description="Compression, naming, comments and build randomization.", IconName="sliders-horizontal"})
+local InterfaceSettings = Tabs.Settings:AddGroupbox({Side="Left", Name="Interface", Description="Adjust the Obsidian window behavior.", IconName="palette"})
+
+GeneralSettings:AddDropdown("LuaRePresetSetting", {Text="Preset", Values={"Performance", "Balanced", "Recommended", "Maximum"}, Default="Recommended", Callback=function(value)
+    if applyPreset then applyPreset(value) else UIState.Settings.Preset=value end
+end})
+GeneralSettings:AddDropdown("LuaReProtectionSetting", {Text="VM protection level", Values={"Low", "Medium", "High", "Maximum"}, Default="High", Callback=function(value) UIState.Settings.VMProtection=value end})
+GeneralSettings:AddDropdown("LuaReCompileSetting", {Text="Compilation mode", Values={"Fast", "Balanced", "Optimized"}, Default="Optimized", Callback=function(value) UIState.Settings.CompilationMode=value end})
+GeneralSettings:AddDropdown("LuaReOutputSetting", {Text="Target format", Values={"Lua source", "Luau source", "Lua bytecode"}, Default="Luau source", Callback=function(value) UIState.Settings.OutputFormat=value end})
+OptimizationSettings:AddToggle("LuaReCompression", {Text="Compress output", Default=true, Callback=function(value) UIState.Settings.CompressOutput=value end})
+OptimizationSettings:AddToggle("LuaReRenameLocals", {Text="Rename local identifiers", Default=true, Callback=function(value) UIState.Settings.RenameLocals=value end})
+OptimizationSettings:AddToggle("LuaReRemoveComments", {Text="Remove comments", Default=true, Callback=function(value) UIState.Settings.RemoveComments=value end})
+OptimizationSettings:AddToggle("LuaReBuildRandomization", {Text="Per-build randomization", Default=true, Callback=function(value) UIState.Settings.RandomizeBuild=value end})
+OptimizationSettings:AddToggle("LuaReDiagnostics", {Text="Include diagnostic output", Default=false, Callback=function(value) UIState.Settings.IncludeDiagnostics=value end})
+InterfaceSettings:AddToggle("LuaReAnimations", {Text="UI animations", Default=true, Callback=function(value)
+    Library.Animations.ToggleWindow=value
+    Library.Animations.TabSwitch=value
+    Library.Animations.Groupbox=value
+    Library.Animations.Dropdown=value
+    Library.Animations.KeyPicker=value
+end})
+InterfaceSettings:AddToggle("LuaReShowKeybindFrame", {Text="Show keybind helper frame", Default=true, Callback=function(value) Library.ShowToggleFrameInKeybinds=value end})
+InterfaceSettings:AddDropdown("LuaReCornerRadius", {Text="Corner style", Values={"Compact", "Rounded", "Soft"}, Default="Rounded", Callback=function(value)
+    local radius = value == "Compact" and 4 or (value == "Soft" and 12 or 8)
+    Window:SetCornerRadius(radius)
+    Library.CornerRadius = radius
+end})
+InterfaceSettings:AddButton({Text="Reset UI Profile", Func=function()
+    if applyPreset then applyPreset("Recommended") end
+    local defaults = {
+        LuaReQuickVMProtection="High", LuaReProtectionSetting="High",
+        LuaReQuickCompileMode="Optimized", LuaReCompileSetting="Optimized",
+        LuaReQuickOutput="Luau source", LuaReOutputSetting="Luau source",
+        LuaReIntegrityMode="HMAC-SHA256", LuaReFragmentCount=5,
+        LuaReEncryptShortStrings=true, LuaReRuntimeSalt=true,
+        LuaReCompression=true, LuaReRenameLocals=true,
+        LuaReRemoveComments=true, LuaReBuildRandomization=true,
+        LuaReDiagnostics=false, LuaRePresetSetting="Recommended", LuaReQuickPreset="Recommended",
+    }
+    for optionId, value in pairs(defaults) do
+        local option = Options[optionId]
+        if option and type(option.SetValue) == "function" then
+            pcall(function() option:SetValue(value) end)
+        end
+    end
+    UIState.Settings.Preset="Recommended"
+    UIState.Settings.VMProtection="High"
+    UIState.Settings.CompilationMode="Optimized"
+    UIState.Settings.OutputFormat="Luau source"
+    UIState.Settings.Integrity="HMAC-SHA256"
+    UIState.Settings.FragmentCount=5
+    UIState.Settings.UseRuntimeSalt=true
+    UIState.Settings.EncryptShortStrings=true
+    UIState.Settings.CompressOutput=true
+    UIState.Settings.RenameLocals=true
+    UIState.Settings.RemoveComments=true
+    UIState.Settings.RandomizeBuild=true
+    UIState.Settings.IncludeDiagnostics=false
+    refreshSummary()
+    notify("Lua-Re", "UI settings and method switches were reset to the Recommended profile.", 4)
+end})
+
+-- ---------------------------------------------------------------------------
+-- OBSIDIAN API GALLERY: working examples for the built-in library controls.
+-- The entire upstream Library.lua is embedded above, including all methods.
+-- ---------------------------------------------------------------------------
+local ApiCore = Tabs.API:AddGroupbox({Side="Left", Name="Core Controls", Description="Representative controls from the original Obsidian API.", IconName="layout-grid"})
+local ApiAdvanced = Tabs.API:AddGroupbox({Side="Right", Name="Add-ons & Advanced Widgets", Description="Keybinds, color pickers, nested tabs and dependencies.", IconName="component"})
+local ApiLifecycle = Tabs.API:AddGroupbox({Side="Left", Name="Library Functions", Description="Theme, notifications and lifecycle entry points.", IconName="code"})
+
+ApiCore:AddLabel("The original Obsidian library remains embedded with its control implementations.", true)
+ApiCore:AddButton({Text="Test Notification", Func=function() notify("Lua-Re / Obsidian", "The notification API is active.", 3) end})
+local apiToggle = ApiCore:AddToggle("ApiDemoToggle", {Text="Demo Toggle", Default=false, Callback=function(value) print("[Lua-Re API] Toggle:", value) end})
+ApiCore:AddCheckbox("ApiDemoCheckbox", {Text="Demo Checkbox", Default=true, Callback=function(value) print("[Lua-Re API] Checkbox:", value) end})
+ApiCore:AddSlider("ApiDemoSlider", {Text="Demo Slider", Default=50, Min=0, Max=100, Rounding=0, Callback=function(value) print("[Lua-Re API] Slider:", value) end})
+ApiCore:AddInput("ApiDemoInput", {Text="Demo Input", Default="", Placeholder="Enter test text", Finished=true, Callback=function(value) print("[Lua-Re API] Input:", value) end})
+ApiCore:AddDropdown("ApiDemoDropdown", {Text="Dropdown", Values={"Lua", "Luau", "Bytecode"}, Default="Luau", Multi=false, Callback=function(value) print("[Lua-Re API] Dropdown:", value) end})
+ApiCore:AddLabel("Label, divider, button, toggle, checkbox, slider, input and dropdown are covered here.", true)
+ApiCore:AddDivider()
+
+apiToggle:AddKeyPicker("ApiDemoKeyPicker", {Text="Toggle hotkey", Default="RightShift", Mode="Toggle", Callback=function(value) print("[Lua-Re API] Keybind:", value) end})
+apiToggle:AddColorPicker("ApiDemoColorPicker", {Title="Accent sample", Default=Colors.Accent, Callback=function(value) print("[Lua-Re API] Color:", value) end})
+local parentButton = ApiAdvanced:AddButton({Text="Parent Button", Func=function() notify("Obsidian API", "Parent button activated.", 2) end})
+parentButton:AddButton({Text="Nested Sub-button", Func=function() notify("Obsidian API", "Nested button activated.", 2) end})
+local apiTabbox = ApiAdvanced:AddTabbox({Name="Nested Tabbox"})
+local apiTabOne = apiTabbox:AddTab("Overview")
+local apiTabTwo = apiTabbox:AddTab("Options")
+apiTabOne:AddLabel("Tabbox:AddTab() creates nested tab sections.", true)
+apiTabOne:AddButton({Text="Nested action", Func=function() notify("Obsidian API", "Nested tab button works.", 2) end})
+apiTabTwo:AddToggle("ApiNestedToggle", {Text="Nested toggle", Default=false})
+local apiDependencyMaster = ApiAdvanced:AddToggle("ApiDependencyMaster", {Text="Show dependency controls", Default=false})
+local apiDependency = ApiAdvanced:AddDependencyBox()
+apiDependency:AddLabel("This group follows the master toggle.", true)
+apiDependency:AddToggle("ApiDependentToggle", {Text="Dependent toggle", Default=false})
+apiDependency:AddButton({Text="Dependent action", Func=function() notify("Obsidian API", "Dependent action executed.", 2) end})
+apiDependency:SetupDependencies({{apiDependencyMaster, true}})
+
+ApiLifecycle:AddButton({Text="Set Watermark", Func=function()
+    pcall(function() Library:SetWatermark("Lua-Re  •  v1.3.2f") end)
+    pcall(function() Library:SetWatermarkVisibility(true) end)
+    notify("Obsidian API", "Watermark enabled when supported by this Obsidian build.", 3)
+end})
+ApiLifecycle:AddButton({Text="Reset Watermark", Func=function()
+    pcall(function() Library:SetWatermarkVisibility(false) end)
+    notify("Obsidian API", "Watermark hidden.", 2)
+end})
+ApiLifecycle:AddButton({Text="Change Font", Func=function()
+    pcall(function() Library:SetFont(Enum.Font.GothamMedium) end)
+    notify("Obsidian API", "Font set to Gotham Medium.", 2)
+end})
+ApiLifecycle:AddLabel("Other embedded API entry points include CreateLoading, AddTooltip, AddContextMenu, draggable UI helpers, theme registry utilities, color helpers, OnUnload and Unload.", true)
+ApiLifecycle:AddLabel("All original Obsidian source methods are retained in this file; this gallery only demonstrates a selected group of them.", true)
+
+-- ---------------------------------------------------------------------------
+-- ABOUT / RUNTIME STATUS
+-- ---------------------------------------------------------------------------
+local AboutProduct = Tabs.About:AddGroupbox({Side="Left", Name="Lua-Re UI", Description="Build identity and included components.", IconName="info"})
+local AboutRuntime = Tabs.About:AddGroupbox({Side="Right", Name="Runtime Status", Description="Honest capability status of this standalone UI preview.", IconName="activity"})
+AboutProduct:AddLabel("Lua-Re v1.3.2f", true)
+AboutProduct:AddLabel("Full Obsidian library embedded directly in this script.", true)
+AboutProduct:AddLabel("The original widget/control API has not been replaced by a short wrapper.", true)
+AboutProduct:AddLabel("Theme: deep navy, electric-blue borders and violet accents.", true)
+AboutProduct:AddButton({Text="Print Obsidian API Snapshot", Func=function()
+    local apiSummary = {
+        libraryMethods = {"CreateWindow", "CreateLoading", "Notify", "SetFont", "SetBackgroundImage", "SetWatermark", "Toggle", "Unload", "OnUnload", "AddTooltip", "AddContextMenu", "MakeDraggable", "MakeResizable", "AddOutline", "UpdateColorsUsingRegistry"},
+        widgetFamilies = {"Button", "Sub-button", "Toggle", "Checkbox", "Slider", "Input", "Dropdown", "Label", "Divider", "Key Picker", "Color Picker", "Tabbox", "Dependency Box", "Image", "Video", "Viewport", "UI Passthrough"},
+        luaReMethods = #MethodDefinitions,
+        enabledMethods = countEnabledMethods(),
+        engineConnected = false,
+    }
+    print("[Lua-Re API snapshot] " .. HttpService:JSONEncode(apiSummary))
+    notify("Lua-Re", "API snapshot printed to the console.", 3)
+end})
+AboutRuntime:AddLabel("GUI status: loaded", true)
+AboutRuntime:AddLabel("Obsidian API: embedded", true)
+AboutRuntime:AddLabel("Method configuration state: active", true)
+AboutRuntime:AddLabel("Obfuscation backend: not connected", true)
+AboutRuntime:AddLabel("License security: this UI has no secure server-side license verification.", true)
+AboutRuntime:AddButton({Text="Unload Lua-Re UI", Tooltip="Destroys the Obsidian GUI and disconnects its signals.", Func=function()
+    Shared.__LuaReObsidianFullRunning = nil
+    Library:Unload()
+end})
+
+-- State access hook for projects that want to connect a backend later.
+Shared.__LuaReObsidianFullRunning = {
     Library = Library,
     Window = Window,
     Tabs = Tabs,
-    Groups = groups,
-    Activated = function() return activated end,
+    State = UIState,
+    MethodDefinitions = MethodDefinitions,
+    GetProfile = function()
+        UIState.Source = CodeBox.Text or ""
+        return UIState
+    end,
 }
-Shared.__LuaReLicenseActivated = false
-Shared.__LuaReLicenseKeyValidated = false
-
-notify("Lua-Re", "Activation UI and dynamic Obsidian UI Builder loaded.", 4)
+Shared.__LuaReObsidianMethodProfile = UIState
+refreshSummary()
+notify("Lua-Re", "Full Obsidian library and Lua-Re method UI loaded.", 4)
+print("[Lua-Re] UI loaded. Original Obsidian library is embedded; method switches currently store profile state only.")
