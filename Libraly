@@ -12,13 +12,29 @@ if type(getgenv) == "function" then
     end
 end
 
-if type(Shared.__LuaReObsidianFullRunning) == "table" then
-    local previous = Shared.__LuaReObsidianFullRunning
-    if previous.Library and not previous.Library.Unloaded then
-        if previous.Window and type(previous.Window.Toggle) == "function" then
-            pcall(function() previous.Window:Toggle(true) end)
-        end
-        return
+-- IMPORTANT: always replace an older Lua-Re/Obsidian instance when this file is re-executed.
+-- The previous guard only toggled the old window and returned, which made updated UI files
+-- appear to do nothing. Clean up both this build's state and a standalone Obsidian test window.
+local PreviousBuild = Shared.__LuaReObsidianFullRunning
+if type(PreviousBuild) == "table" then
+    if PreviousBuild.Library and type(PreviousBuild.Library.Unload) == "function" then
+        pcall(function() PreviousBuild.Library:Unload() end)
+    elseif PreviousBuild.Window and type(PreviousBuild.Window.Unload) == "function" then
+        pcall(function() PreviousBuild.Window:Unload() end)
+    end
+    if PreviousBuild.Library and PreviousBuild.Library.ScreenGui then
+        pcall(function() PreviousBuild.Library.ScreenGui:Destroy() end)
+    end
+end
+Shared.__LuaReObsidianFullRunning = nil
+Shared.__LuaReObsidianMethodProfile = nil
+
+-- Also remove an earlier standalone Obsidian library instance (e.g. the Basic Controls test).
+local PreviousLibrary = Shared.Library
+if type(PreviousLibrary) == "table" and type(PreviousLibrary.Unload) == "function" then
+    pcall(function() PreviousLibrary:Unload() end)
+    if PreviousLibrary.ScreenGui then
+        pcall(function() PreviousLibrary.ScreenGui:Destroy() end)
     end
 end
 
@@ -14926,8 +14942,8 @@ Library.ToggleKeybind = Enum.KeyCode.RightControl
 Library.CornerRadius = 10
 
 local Window = Library:CreateWindow({
-    Title = "Lua-Re  |  Lua / Luau Obfuscator",
-    Footer = "Lua-Re v1.3.2f  •  Obsidian UI  •  Right Ctrl to toggle",
+    Title = "Lua-Re  |  v1.3.2f  •  Obfuscation Workbench",
+    Footer = "Lua-Re v1.3.2f  •  FULL METHODS UI  •  Right Ctrl to toggle",
     Size = UDim2.fromOffset(1240, 780),
     Center = true,
     AutoShow = true,
